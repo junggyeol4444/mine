@@ -1,0 +1,4 @@
+name: MinecraftJobPlugin
+version: '1.0-SNAPSHOT'
+main: org.blog.minecraftJobPlugin.MinecraftJobPlugin
+api-version: '1.21'
