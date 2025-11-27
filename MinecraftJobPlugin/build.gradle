@@ -53,3 +53,8 @@ processResources {
         expand props
     }
 }
+
+tasks.jar {
+    archiveFileName = 'job.jar'
+    destinationDirectory = file('C:/Users/jungg/OneDrive/Desktop/플러그인 빌드')
+}

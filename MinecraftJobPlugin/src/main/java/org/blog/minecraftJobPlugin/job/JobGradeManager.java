@@ -1,68 +1,71 @@
-package com.yourname.jobplugin.job;
+package org.blog.minecraftJobPlugin.job;
 
-import com.yourname.jobplugin.JobPlugin;
-import org.bukkit.entity.Player;
+import org.blog.minecraftJobPlugin.JobPlugin;
+import org.blog.minecraftJobPlugin.util.PluginDataUtil;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.UUID;
 
 public class JobGradeManager {
     private final JobPlugin plugin;
-    // [플레이어 UUID] → [직업명] → 등급
+    private final PluginDataUtil dataUtil;
     private final Map<UUID, Map<String, String>> playerGrades = new HashMap<>();
 
     public JobGradeManager(JobPlugin plugin) {
         this.plugin = plugin;
+        this.dataUtil = new PluginDataUtil(plugin);
         loadGrades();
     }
 
-    // 플레이어 등급 조회
     public String getGrade(Player p, String job) {
-        return playerGrades
-                .getOrDefault(p.getUniqueId(), new HashMap<>())
-                .getOrDefault(job, "D");
+        return playerGrades.getOrDefault(p.getUniqueId(), Collections.emptyMap()).getOrDefault(job, "D");
     }
 
-    // 승급 조건 체크 & 승급
-    public void tryPromote(Player p, String job, int activityCount, int jobLevel, int questClearCount, int sales) {
-        YamlConfiguration yaml = plugin.getConfig("grades");
-        for (String grade : yaml.getConfigurationSection("grades").getKeys(false)) {
-            // D~S 등급, 조건 판별
-            String req = yaml.getString("grades." + grade + ".requirement");
-            boolean canUpgrade = false;
-            switch (grade) {
-                case "C": canUpgrade = activityCount >= 200; break;
-                case "B": canUpgrade = activityCount >= 500 || questClearCount >= 10; break;
-                case "A": canUpgrade = jobLevel >= 20; break;
-                case "S": canUpgrade = questClearCount >= 30 || sales >= 10000; break;
-                default: canUpgrade = true;
-            }
-            if (canUpgrade) upgradeGrade(p, job, grade);
-        }
-    }
-
-    // 등급 승급 적용
     public void upgradeGrade(Player p, String job, String grade) {
         playerGrades.computeIfAbsent(p.getUniqueId(), k->new HashMap<>()).put(job, grade);
-        applyGradeReward(p, job, grade);
-        p.sendMessage("§d" + job + " 직업 등급이 [" + grade + "]로 승급되었습니다!");
-    }
-
-    // 등급별 보상 적용
-    public void applyGradeReward(Player p, String job, String grade) {
-        YamlConfiguration yaml = plugin.getConfig("grades");
-        String gradeName = yaml.getString("grades." + grade + ".name");
-        String reward = yaml.getString("grades." + grade + ".reward");
-        p.sendMessage("§6등급 보상 지급: " + reward);
-        // 예시: 상점 할인/포인트/아이템/칭호 지급 등
-        // 실제 구현은 EconomyManager, TraitManager 등과 연동
-    }
-
-    public void saveAll() {
-        // TODO: playerGrades 저장
+        savePlayerGradesAsync(p.getUniqueId());
+        p.sendMessage("§d" + job + " 등급이 " + grade + "로 승급되었습니다!");
     }
 
     private void loadGrades() {
-        // TODO: playerGrades 파일/DB 로딩
+        java.io.File playerDir = new java.io.File(plugin.getDataFolder(), "data/player");
+        if (!playerDir.exists()) return;
+        java.io.File[] files = playerDir.listFiles((d,n)->n.endsWith(".yml"));
+        if (files == null) return;
+        for (java.io.File f : files) {
+            try {
+                UUID uuid = UUID.fromString(f.getName().replace(".yml",""));
+                YamlConfiguration cfg = YamlConfiguration.loadConfiguration(f);
+                Map<String, String> grades = new HashMap<>();
+                if (cfg.isConfigurationSection("grades")) {
+                    for (String job : cfg.getConfigurationSection("grades").getKeys(false)) {
+                        grades.put(job, cfg.getString("grades." + job));
+                    }
+                }
+                if (!grades.isEmpty()) playerGrades.put(uuid, grades);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private void savePlayerGradesAsync(UUID uuid) {
+        YamlConfiguration cfg = dataUtil.loadPlayerConfig(uuid);
+        Map<String, String> grades = playerGrades.getOrDefault(uuid, Collections.emptyMap());
+        for (Map.Entry<String,String> e : grades.entrySet()) cfg.set("grades." + e.getKey(), e.getValue());
+        dataUtil.savePlayerConfigAsync(uuid, cfg);
+    }
+
+    public void saveAllAsync() {
+        for (UUID u : playerGrades.keySet()) savePlayerGradesAsync(u);
+    }
+
+    public void saveAll() {
+        for (UUID u : playerGrades.keySet()) {
+            YamlConfiguration cfg = dataUtil.loadPlayerConfig(u);
+            Map<String,String> grades = playerGrades.getOrDefault(u, Collections.emptyMap());
+            for (Map.Entry<String,String> e : grades.entrySet()) cfg.set("grades." + e.getKey(), e.getValue());
+            dataUtil.savePlayerConfigSync(u, cfg);
+        }
     }
 }

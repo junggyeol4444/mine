@@ -1,4 +1,4 @@
-package com.yourname.jobplugin.quest;
+package org.blog.minecraftJobPlugin.quest;
 
 import java.util.Map;
 
@@ -15,14 +15,18 @@ public class QuestMeta {
         this.type = type;
     }
 
-    // yaml map → 객체 변환
-    @SuppressWarnings("unchecked")
     public static QuestMeta fromYaml(Map<?,?> map) {
-        return new QuestMeta(
-                (String)map.getOrDefault("id", ""),
-                (String)map.getOrDefault("name", ""),
-                (int)map.getOrDefault("reward", 0),
-                (String)map.getOrDefault("type", "daily")
-        );
+        if (map == null) return new QuestMeta("", "", 0, "daily");
+        Object idO = map.get("id");
+        Object nameO = map.get("name");
+        Object rewardO = map.get("reward");
+        Object typeO = map.get("type");
+        String id = idO == null ? "" : String.valueOf(idO);
+        String name = nameO == null ? "" : String.valueOf(nameO);
+        int reward = 0;
+        if (rewardO instanceof Number) reward = ((Number)rewardO).intValue();
+        else if (rewardO != null) try { reward = Integer.parseInt(String.valueOf(rewardO)); } catch (Exception ignored){}
+        String type = typeO == null ? "daily" : String.valueOf(typeO);
+        return new QuestMeta(id, name, reward, type);
     }
 }

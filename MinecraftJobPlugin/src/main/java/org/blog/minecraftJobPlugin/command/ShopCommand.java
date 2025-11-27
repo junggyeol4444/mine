@@ -1,8 +1,8 @@
-package com.yourname.jobplugin.command;
+package org.blog.minecraftJobPlugin.command;
 
-import com.yourname.jobplugin.JobPlugin;
-import com.yourname.jobplugin.job.JobManager;
-import com.yourname.jobplugin.gui.ShopGUI;
+import org.blog.minecraftJobPlugin.JobPlugin;
+import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.gui.ShopGUI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.CommandExecutor;
@@ -28,14 +28,12 @@ public class ShopCommand implements CommandExecutor {
         Player player = (Player)sender;
 
         String activeJob = jobManager.getActiveJob(player);
-
         if (activeJob == null) {
             player.sendMessage("§c직업을 장착한 후 상점을 이용할 수 있습니다.");
             return true;
         }
 
-        ShopGUI gui = new ShopGUI(plugin, player, activeJob);
-        gui.open();
+        new ShopGUI(plugin, player, activeJob).open();
 
         return true;
     }

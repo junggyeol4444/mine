@@ -1,10 +1,10 @@
-package com.yourname.jobplugin.gui;
+package org.blog.minecraftJobPlugin.gui;
 
-import com.yourname.jobplugin.JobPlugin;
-import com.yourname.jobplugin.skill.SkillManager;
-import com.yourname.jobplugin.skill.TraitManager;
-import com.yourname.jobplugin.skill.TraitMeta;
-import com.yourname.jobplugin.job.JobManager;
+import org.blog.minecraftJobPlugin.JobPlugin;
+import org.blog.minecraftJobPlugin.skill.SkillManager;
+import org.blog.minecraftJobPlugin.skill.TraitManager;
+import org.blog.minecraftJobPlugin.skill.TraitMeta;
+import org.blog.minecraftJobPlugin.job.JobManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -35,7 +35,6 @@ public class SkillTreeGUI {
 
         Inventory inv = Bukkit.createInventory(player, 27, "스킬 트리 / 특성");
 
-        // 스킬 레벨/경험치 바 & 효과
         List<String> jobSkills = plugin.getJobManager().getJobMeta(job).skills;
         for (int i = 0; i < jobSkills.size(); i++) {
             String skill = jobSkills.get(i);
@@ -51,7 +50,6 @@ public class SkillTreeGUI {
             inv.setItem(i, icon);
         }
 
-        // 특성 트리
         List<TraitMeta> traits = tm.getTraits(job);
         for (int i = 0; i < traits.size(); i++) {
             TraitMeta trait = traits.get(i);
@@ -66,7 +64,5 @@ public class SkillTreeGUI {
             inv.setItem(9 + i, icon);
         }
         player.openInventory(inv);
-
-        // 특성 선택 이벤트는 별도 리스너에서 구현!
     }
 }

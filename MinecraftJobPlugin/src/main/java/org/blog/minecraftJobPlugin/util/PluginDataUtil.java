@@ -1,26 +1,55 @@
-package com.yourname.jobplugin.util;
+package org.blog.minecraftJobPlugin.util;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import java.io.File;
-import java.util.UUID;
-import java.util.Map;
+import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.UUID;
+
+/**
+ * LocalStorage 래퍼. 비동기 저장 유틸 제공
+ */
 public class PluginDataUtil {
 
-    // 플레이어별 시스템 데이터 저장
-    public static void savePlayerData(JavaPlugin plugin, UUID player, Map<String, Object> dataMap, String fileName) {
-        // TODO: dataMap → yaml/json 파일로 저장
-        // 예: new File(plugin.getDataFolder(), "player/" + player + "/" + fileName)
+    private final LocalStorage storage;
+    private final JavaPlugin plugin;
+
+    public PluginDataUtil(JavaPlugin plugin) {
+        this.plugin = plugin;
+        this.storage = new LocalStorage(plugin);
     }
 
-    // 전체 시스템 저장
-    public static void saveAll(JavaPlugin plugin) {
-        // 각 매니저: jobManager.saveAll(), economyManager.saveAll() 등 호출
+    public YamlConfiguration loadPlayerConfig(UUID player) {
+        return storage.loadPlayerConfig(player);
     }
 
-    // 데이터 로딩
-    public static Map<String, Object> loadPlayerData(JavaPlugin plugin, UUID player, String fileName) {
-        // TODO: 파일 → Map 변환
-        return null;
+    public void savePlayerConfigAsync(UUID player, YamlConfiguration cfg) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                storage.savePlayerConfigSync(player, cfg);
+            }
+        }.runTaskAsynchronously(plugin);
+    }
+
+    public void savePlayerConfigSync(UUID player, YamlConfiguration cfg) {
+        storage.savePlayerConfigSync(player, cfg);
+    }
+
+    public YamlConfiguration loadGlobal(String filename) {
+        return storage.loadGlobalConfig(filename);
+    }
+
+    public void saveGlobalAsync(String filename, YamlConfiguration cfg) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                storage.saveGlobalConfigSync(filename, cfg);
+            }
+        }.runTaskAsynchronously(plugin);
+    }
+
+    public void saveGlobalSync(String filename, YamlConfiguration cfg) {
+        storage.saveGlobalConfigSync(filename, cfg);
     }
 }

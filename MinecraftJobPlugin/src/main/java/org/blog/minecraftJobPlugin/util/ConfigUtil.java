@@ -1,42 +1,45 @@
-package com.yourname.jobplugin.util;
+package org.blog.minecraftJobPlugin.util;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 모든 YAML 설정 데이터 로딩 및 전역 접근 유틸
+ * resources/config/*.yml 을 data/config/*.yml 로 복사하고 캐시 제공
  */
 public class ConfigUtil {
-    public static Map<String, YamlConfiguration> configs = new HashMap<>();
+    private static final Map<String, YamlConfiguration> CACHE = new HashMap<>();
 
     public static void loadAllConfigs(JavaPlugin plugin) {
-        String[] configNames = { "jobs", "shops", "quests", "skills", "traits", "grades", "combos", "economy" };
-        File configDir = new File(plugin.getDataFolder(), "config");
-        if (!configDir.exists()) configDir.mkdirs();
-
-        for (String name : configNames) {
-            File file = new File(configDir, name + ".yml");
-            if (!file.exists()) plugin.saveResource("config/" + name + ".yml", false);
-            configs.put(name, YamlConfiguration.loadConfiguration(file));
-        }
+        String[] names = new String[] {"jobs","quests","skills","traits","shops","grades","combos","economy"};
+        for (String n : names) getConfig(plugin, n);
     }
 
     public static YamlConfiguration getConfig(String name) {
-        return configs.get(name);
+        return CACHE.get(name);
     }
 
-    // 개별 저장 (예: 시스템 데이터 변경 → 파일로 반영)
-    public static void saveConfig(String name, JavaPlugin plugin) {
-        YamlConfiguration config = configs.get(name);
-        if (config == null) return;
-        File file = new File(plugin.getDataFolder(), "config/" + name + ".yml");
-        try {
-            config.save(file);
-        } catch (Exception e) {
-            plugin.getLogger().warning("설정 파일 저장 오류: " + file.getName());
+    public static YamlConfiguration getConfig(JavaPlugin plugin, String name) {
+        if (CACHE.containsKey(name)) return CACHE.get(name);
+        LocalStorage ls = new LocalStorage(plugin);
+        YamlConfiguration cfg = ls.loadGlobalConfig(name);
+        // fallback to resource if file empty
+        if ((cfg == null || cfg.getKeys(false).isEmpty())) {
+            try (InputStream is = plugin.getResource("config/" + name + ".yml")) {
+                if (is != null) {
+                    cfg = YamlConfiguration.loadConfiguration(new InputStreamReader(is, StandardCharsets.UTF_8));
+                    try { cfg.save(new File(plugin.getDataFolder(), "config/" + name + ".yml")); } catch (Exception ignored) {}
+                }
+            } catch (Exception ignored) {}
         }
+        if (cfg == null) cfg = new YamlConfiguration();
+        CACHE.put(name, cfg);
+        return cfg;
     }
 }

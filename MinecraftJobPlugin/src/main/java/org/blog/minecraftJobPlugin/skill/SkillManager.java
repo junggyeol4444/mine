@@ -1,109 +1,150 @@
-package com.yourname.jobplugin.skill;
+package org.blog.minecraftJobPlugin.skill;
 
-import com.yourname.jobplugin.JobPlugin;
-import com.yourname.jobplugin.job.JobManager;
+import org.blog.minecraftJobPlugin.JobPlugin;
+import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.util.PluginDataUtil;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
+/**
+ * SkillManager — 스킬 경험치/레벨 관리 + 간단한 효과 구현
+ */
 public class SkillManager {
 
     private final JobPlugin plugin;
     private final JobManager jobManager;
+    private final PluginDataUtil dataUtil;
 
-    // [플레이어, 스킬명] 쿨타임 종료시각
-    private final Map<UUID, Map<String, Long>> skillCooldowns = new HashMap<>();
-    // [플레이어, 스킬명] 레벨
     private final Map<UUID, Map<String, Integer>> skillLevels = new HashMap<>();
-    // [플레이어, 스킬명] 경험치
     private final Map<UUID, Map<String, Integer>> skillExp = new HashMap<>();
+    private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
 
-    public SkillManager(JobPlugin plugin, JobManager jobManager) {
+    public SkillManager(JobPlugin plugin, JobManager jm) {
         this.plugin = plugin;
-        this.jobManager = jobManager;
+        this.jobManager = jm;
+        this.dataUtil = new PluginDataUtil(plugin);
         loadSkillData();
     }
 
-    // 스킬 발동 요청
     public boolean useSkill(Player player, String skillName) {
+        UUID id = player.getUniqueId();
         int level = getSkillLevel(player, skillName);
         long now = System.currentTimeMillis();
-        long cooldownEnd = getSkillCooldownEnd(player, skillName);
-
-        SkillMeta skillMeta = getSkillMeta(skillName);
-        if (cooldownEnd > now) {
-            long left = (cooldownEnd-now)/1000;
-            player.sendMessage("§c스킬 쿨타임 중입니다. (" + left + "초)");
+        long cd = SkillMeta.loadFromConfig(skillName, plugin).cooldown * 1000L;
+        cooldowns.computeIfAbsent(id, k->new HashMap<>());
+        long last = cooldowns.get(id).getOrDefault(skillName, 0L);
+        if (now - last < cd) {
+            player.sendMessage("§c스킬 쿨타임 중입니다.");
             return false;
         }
-        // 실제 발동 효과 (이벤트/버프 적용 등 구현! → SkillMeta 효과 해석 & 적용)
-        player.sendMessage("§b[" + skillMeta.display + "] 스킬 Lv." + level + " 발동!");
+        cooldowns.get(id).put(skillName, now);
 
-        // 쿨타임 갱신
-        setSkillCooldownEnd(player, skillName, now + skillMeta.getCooldown(level) * 1000);
+        addSkillExp(player, skillName, 20);
 
-        // 경험치 증가
-        addSkillExp(player, skillName, 10);
-
-        // GUI/액션바에 쿨타임 표시
-        showSkillCooldown(player, skillName);
+        switch (skillName) {
+            case "geoScan":
+                player.sendMessage("§6[GeoScan] 주변 지형을 스캔했습니다.");
+                break;
+            case "fastLumber":
+                PotionEffectType haste = PotionEffectType.getByName("FAST_DIGGING");
+                if (haste == null) haste = PotionEffectType.getByName("DIG_SPEED");
+                if (haste != null) {
+                    player.addPotionEffect(new PotionEffect(haste, 20 * 10, 1));
+                    player.sendMessage("§a[FastLumber] 벌목 속도 증가 (10초).");
+                } else {
+                    player.sendMessage("§a[FastLumber] (속도 효과를 적용할 수 없습니다: 서버 API 호환성 문제)");
+                }
+                break;
+            case "veinDetect":
+                player.sendMessage("§e[VeinDetect] 근처 광맥을 감지했습니다 (가상).");
+                break;
+            default:
+                player.sendMessage("§d[" + skillName + "] 스킬을 사용했습니다.");
+        }
         return true;
     }
 
-    // 쿨타임 표시 (액션바)
-    public void showSkillCooldown(Player player, String skillName) {
-        long now = System.currentTimeMillis();
-        long end = getSkillCooldownEnd(player, skillName);
-        int leftSec = (int)((end-now)/1000);
-        if (leftSec > 0) {
-            player.sendActionBar("§e스킬 [" + skillName + "] 쿨타임: §c" + leftSec + "초");
-        }
-    }
-
-    // 쿨타임 조회/갱신
-    public long getSkillCooldownEnd(Player player, String key) {
-        return skillCooldowns
-                .getOrDefault(player.getUniqueId(), new HashMap<>())
-                .getOrDefault(key, 0L);
-    }
-    public void setSkillCooldownEnd(Player player, String key, long end) {
-        skillCooldowns.computeIfAbsent(player.getUniqueId(), k->new HashMap<>()).put(key, end);
-    }
-
-    // 스킬 경험치/레벨
-    public int getSkillExp(Player player, String skill) {
-        return skillExp.computeIfAbsent(player.getUniqueId(), k->new HashMap<>()).getOrDefault(skill, 0);
-    }
     public int getSkillLevel(Player player, String skill) {
         return skillLevels.computeIfAbsent(player.getUniqueId(), k->new HashMap<>()).getOrDefault(skill, 1);
     }
+
+    public int getSkillExp(Player player, String skill) {
+        return skillExp.computeIfAbsent(player.getUniqueId(), k->new HashMap<>()).getOrDefault(skill, 0);
+    }
+
     private void addSkillExp(Player player, String skill, int exp) {
+        UUID id = player.getUniqueId();
+        skillExp.computeIfAbsent(id, k->new HashMap<>());
         int before = getSkillExp(player, skill);
         int after = before + exp;
-        skillExp.computeIfAbsent(player.getUniqueId(), k->new HashMap<>()).put(skill, after);
+        skillExp.get(id).put(skill, after);
 
         int curLevel = getSkillLevel(player, skill);
-        SkillMeta meta = getSkillMeta(skill);
-
-        if (after >= meta.getExpForLevel(curLevel+1)) {
-            skillLevels.computeIfAbsent(player.getUniqueId(), k->new HashMap<>()).put(skill, curLevel+1);
-            player.sendMessage("§d[" + skill + "] 스킬 레벨업! Lv." + (curLevel+1));
+        SkillMeta meta = SkillMeta.loadFromConfig(skill, plugin);
+        if (after >= meta.getExpForLevel(curLevel + 1)) {
+            skillLevels.computeIfAbsent(id, k->new HashMap<>()).put(skill, curLevel + 1);
+            player.sendMessage("§d[" + skill + "] 레벨업! Lv." + (curLevel + 1));
         }
     }
 
-    // SkillMeta 조회
-    public SkillMeta getSkillMeta(String skill) {
-        return SkillMeta.loadFromConfig(skill, plugin);
+    private void loadSkillData() {
+        java.io.File playerDir = new java.io.File(plugin.getDataFolder(), "data/player");
+        if (!playerDir.exists()) return;
+        java.io.File[] files = playerDir.listFiles((d,n)->n.endsWith(".yml"));
+        if (files == null) return;
+        for (java.io.File f : files) {
+            try {
+                UUID uuid = UUID.fromString(f.getName().replace(".yml",""));
+                YamlConfiguration cfg = YamlConfiguration.loadConfiguration(f);
+                if (cfg.isConfigurationSection("skills")) {
+                    Map<String,Integer> lv = new HashMap<>();
+                    Map<String,Integer> ex = new HashMap<>();
+                    for (String s : cfg.getConfigurationSection("skills").getKeys(false)) {
+                        lv.put(s, cfg.getInt("skills." + s + ".level", 1));
+                        ex.put(s, cfg.getInt("skills." + s + ".exp", 0));
+                    }
+                    if (!lv.isEmpty()) skillLevels.put(uuid, lv);
+                    if (!ex.isEmpty()) skillExp.put(uuid, ex);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
-    // 전체 로딩/저장
-    private void loadSkillData() {
-        // TODO: 파일/DB에서 데이터 로딩
+    private void savePlayerSkillsSync(UUID uuid) {
+        YamlConfiguration cfg = dataUtil.loadPlayerConfig(uuid);
+        Map<String,Integer> lv = skillLevels.getOrDefault(uuid, Collections.emptyMap());
+        Map<String,Integer> ex = skillExp.getOrDefault(uuid, Collections.emptyMap());
+        for (Map.Entry<String,Integer> e : lv.entrySet()) cfg.set("skills." + e.getKey() + ".level", e.getValue());
+        for (Map.Entry<String,Integer> e : ex.entrySet()) cfg.set("skills." + e.getKey() + ".exp", e.getValue());
+        dataUtil.savePlayerConfigSync(uuid, cfg);
     }
+
+    public void saveAllAsync() {
+        Set<UUID> all = new HashSet<>();
+        all.addAll(skillLevels.keySet());
+        all.addAll(skillExp.keySet());
+        for (UUID u : all) {
+            YamlConfiguration cfg = dataUtil.loadPlayerConfig(u);
+            Map<String,Integer> lv = skillLevels.getOrDefault(u, Collections.emptyMap());
+            Map<String,Integer> ex = skillExp.getOrDefault(u, Collections.emptyMap());
+            for (Map.Entry<String,Integer> e : lv.entrySet()) cfg.set("skills." + e.getKey() + ".level", e.getValue());
+            for (Map.Entry<String,Integer> e : ex.entrySet()) cfg.set("skills." + e.getKey() + ".exp", e.getValue());
+            dataUtil.savePlayerConfigAsync(u, cfg);
+        }
+    }
+
     public void saveAll() {
-        // TODO: 파일/DB에 skillCooldown, level, exp 등 저장
+        Set<UUID> all = new HashSet<>();
+        all.addAll(skillLevels.keySet());
+        all.addAll(skillExp.keySet());
+        for (UUID u : all) savePlayerSkillsSync(u);
+    }
+
+    public SkillMeta getSkillMeta(String skill) {
+        return SkillMeta.loadFromConfig(skill, plugin);
     }
 }

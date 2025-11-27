@@ -1,108 +1,76 @@
-package com.yourname.jobplugin.listener;
+package org.blog.minecraftJobPlugin.listener;
 
-import com.yourname.jobplugin.JobPlugin;
-import com.yourname.jobplugin.job.JobManager;
-import com.yourname.jobplugin.skill.TraitManager;
-import com.yourname.jobplugin.gui.JobSelectionGUI;
-import com.yourname.jobplugin.gui.SkillTreeGUI;
-import com.yourname.jobplugin.gui.QuestGUI;
-import com.yourname.jobplugin.gui.ShopGUI;
-import com.yourname.jobplugin.econ.EconomyManager;
-import org.bukkit.event.Listener;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.inventory.InventoryClickEvent;
+import org.blog.minecraftJobPlugin.JobPlugin;
+import org.blog.minecraftJobPlugin.gui.JobSelectionGUI;
+import org.blog.minecraftJobPlugin.gui.ShopGUI;
+import org.blog.minecraftJobPlugin.job.JobManager;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class JobGuiListener implements Listener {
+
     private final JobPlugin plugin;
-    private final JobManager jobManager;
-    private final TraitManager traitManager;
-    private final EconomyManager economyManager;
 
     public JobGuiListener(JobPlugin plugin) {
         this.plugin = plugin;
-        this.jobManager = plugin.getJobManager();
-        this.traitManager = plugin.getTraitManager();
-        this.economyManager = plugin.getEconomyManager();
     }
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        String title = event.getView().getTitle();
-        ItemStack clicked = event.getCurrentItem();
-        if (clicked == null) return;
+    public void onInventoryClick(InventoryClickEvent e) {
+        if (e.getWhoClicked() == null) return;
+        String title = e.getView().getTitle();
+        Player p = (Player) e.getWhoClicked();
 
-        // 직업 선택 GUI
-        if (title.contains("직업 선택")) {
-            event.setCancelled(true);
-            String jobClicked = parseJobFromItem(clicked);
-            if (jobClicked != null && jobManager.hasJob(player, jobClicked)) {
-                jobManager.setActiveJob(player, jobClicked);
-                player.sendMessage("§a[" + jobClicked + "] 직업 장착 완료!");
-                player.closeInventory();
-            } else {
-                player.sendMessage("§c해당 직업 미보유 또는 선택 불가.");
+        if (JobSelectionGUI.isJobInventory(title)) {
+            e.setCancelled(true);
+            ItemStack clicked = e.getCurrentItem();
+            if (clicked == null || !clicked.hasItemMeta()) return;
+            String display = clicked.getItemMeta().getDisplayName();
+            if (display == null) return;
+            JobManager jm = plugin.getJobManager();
+            String jobKey = jm.getAllJobs().stream().filter(meta -> (ChatColor.AQUA + meta.display).equals(display) || meta.display.equals(ChatColor.stripColor(display))).map(meta->meta.key).findFirst().orElse(null);
+            if (jobKey == null) {
+                p.sendMessage("§c직업을 확인할 수 없습니다.");
+                return;
             }
-        }
-
-        // 특성 트리 GUI
-        if (title.contains("스킬 트리")) {
-            event.setCancelled(true);
-            String traitClicked = parseTraitFromItem(clicked);
-            String job = jobManager.getActiveJob(player);
-            if (traitClicked != null && traitManager.getPoints(player, job) > 0) {
-                traitManager.selectTrait(player, job, traitClicked);
-                player.sendMessage("§a특성 [" + traitClicked + "] 선택!");
-                player.closeInventory();
-            } else {
-                player.sendMessage("§c포인트 부족 또는 선택 불가.");
+            if (e.isLeftClick()) {
+                jm.addJob(p, jobKey);
+                p.sendMessage("§a직업을 획득했습니다: §b" + jobKey);
+            } else if (e.isRightClick()) {
+                if (!jm.hasJob(p, jobKey)) {
+                    p.sendMessage("§c해당 직업을 보유하고 있지 않습니다. 먼저 획득하세요.");
+                } else {
+                    jm.setActiveJob(p, jobKey);
+                    p.sendMessage("§a장착 직업 변경: §b" + jobKey);
+                }
             }
+            return;
         }
 
-        // 퀘스트 GUI
-        if (title.contains("직업 전용 퀘스트")) {
-            event.setCancelled(true);
-            // 퀘스트 완료/수락/보상
-            // TODO: 퀘스트 선택 및 완료 체크, 보상 지급 등
-            player.sendMessage("§e퀘스트 기능은 확장 구현 필요.");
-        }
-
-        // 상점 GUI
-        if (title.contains("상점")) {
-            event.setCancelled(true);
-            // 아이템 구매: 금액 체크, item 지급, 이코노미 연동
-            int price = parsePriceFromItem(clicked);
-            if (economyManager.takeMoney(player, price)) {
-                player.getInventory().addItem(clicked.clone());
-                player.sendMessage("§a상점 아이템 구매 성공!");
-            } else {
-                player.sendMessage("§c금액 부족!");
+        if (ShopGUI.isShopInventory(title)) {
+            e.setCancelled(true);
+            ItemStack clicked = e.getCurrentItem();
+            if (clicked == null || !clicked.hasItemMeta()) return;
+            String job = title.replace(ShopGUI.SHOP_TITLE_PREFIX, "");
+            if (clicked.getType() == Material.EMERALD && clicked.getItemMeta().getDisplayName().contains("판매하기")) {
+                ShopGUI shop = new ShopGUI(plugin, p, job);
+                shop.openSell();
+                return;
             }
+            ShopGUI shop = new ShopGUI(plugin, p, job);
+            boolean ok = shop.handlePurchase(clicked);
+            if (ok) p.closeInventory();
+            return;
         }
-    }
 
-    private String parseJobFromItem(ItemStack item) {
-        if (item != null && item.getItemMeta() != null
-                && item.getItemMeta().getDisplayName() != null) {
-            return item.getItemMeta().getDisplayName().replace("§e", "");
+        if (ShopGUI.isSellInventory(title)) {
+            boolean handled = ShopGUI.handleSellClick(e, plugin);
+            if (handled) return;
         }
-        return null;
-    }
-    private String parseTraitFromItem(ItemStack item) {
-        if (item != null && item.getItemMeta() != null
-                && item.getItemMeta().getDisplayName() != null) {
-            return item.getItemMeta().getDisplayName().replace("§b", "");
-        }
-        return null;
-    }
-    private int parsePriceFromItem(ItemStack item) {
-        if (item == null || item.getItemMeta() == null || item.getItemMeta().getLore() == null) return 0;
-        for (String lore : item.getItemMeta().getLore())
-            if (lore.contains("가격:"))
-                return Integer.parseInt(lore.replaceAll("[^0-9]", ""));
-        return 0;
     }
 }
