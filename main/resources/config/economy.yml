@@ -1,0 +1,7 @@
+
+  # 이코노미 기본 설정
+  economy:
+    default_reward: 50       # 기본 행동 보상
+    currency_symbol: "원"    # 통화 기호/문자열
+    starting_balance: 0      # 신규 플레이어 시작 금액
+    autosave_seconds: 300    # 플레이어 데이터 자동 저장 주기 (초)
