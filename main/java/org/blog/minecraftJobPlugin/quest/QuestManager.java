@@ -1,7 +1,7 @@
 package org.blog.minecraftJobPlugin.quest;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;  // 수정
 import org.blog.minecraftJobPlugin.econ.EconomyManager;
 import org.blog.minecraftJobPlugin.util.PluginDataUtil;
 import org.bukkit.configuration.file.YamlConfiguration;

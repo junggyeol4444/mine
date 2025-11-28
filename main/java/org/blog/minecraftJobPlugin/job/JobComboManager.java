@@ -1,6 +1,7 @@
 package org.blog.minecraftJobPlugin.job;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
+import org.blog.minecraftJobPlugin.manager.JobManager;
 import org.blog.minecraftJobPlugin.util.PluginDataUtil;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -14,18 +15,22 @@ import java.util.*;
  */
 public class JobComboManager {
     private final JobPlugin plugin;
+    private final JobManager jobManager;
     private final PluginDataUtil dataUtil;
     private final Map<UUID, Set<String>> unlockedCombos = new HashMap<>();
 
     public JobComboManager(JobPlugin plugin) {
         this.plugin = plugin;
+        this.jobManager = plugin.getJobManager();
         this.dataUtil = new PluginDataUtil(plugin);
         loadCombos();
     }
 
     public List<String> getAllCombos() {
         YamlConfiguration yaml = dataUtil.loadGlobal("combos");
-        if (yaml == null || !yaml.isConfigurationSection("combos")) return Collections.emptyList();
+        if (yaml == null || !yaml.isConfigurationSection("combos")) {
+            return Collections.emptyList();
+        }
         return new ArrayList<>(yaml.getConfigurationSection("combos").getKeys(false));
     }
 
@@ -47,17 +52,25 @@ public class JobComboManager {
      */
     public void checkAndUnlockCombos(Player player) {
         YamlConfiguration combos = dataUtil.loadGlobal("combos");
-        if (combos == null || !combos.isConfigurationSection("combos")) return;
+        if (combos == null || !combos.isConfigurationSection("combos")) {
+            return;
+        }
 
-        Set<String> playerJobs = plugin.getJobManager().getPlayerJobs(player);
-        if (playerJobs.isEmpty()) return;
+        Set<String> playerJobs = jobManager.getPlayerJobs(player, true);
+        if (playerJobs.isEmpty()) {
+            return;
+        }
 
         for (String comboKey : combos.getConfigurationSection("combos").getKeys(false)) {
             // 이미 해금했으면 스킵
-            if (hasCombo(player, comboKey)) continue;
+            if (hasCombo(player, comboKey)) {
+                continue;
+            }
 
             List<String> requirements = combos.getStringList("combos." + comboKey + ".requirements");
-            if (requirements.isEmpty()) continue;
+            if (requirements.isEmpty()) {
+                continue;
+            }
 
             // 모든 필요 직업을 보유했는지 확인
             boolean canUnlock = true;
@@ -75,7 +88,7 @@ public class JobComboManager {
     }
 
     public boolean unlockCombo(Player player, String comboKey) {
-        unlockedCombos.computeIfAbsent(player.getUniqueId(), k->new HashSet<>()).add(comboKey);
+        unlockedCombos.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>()).add(comboKey);
         savePlayerCombosAsync(player.getUniqueId());
 
         YamlConfiguration combos = dataUtil.loadGlobal("combos");
@@ -110,7 +123,9 @@ public class JobComboManager {
             case "farmer_chef":
                 // 농부 + 요리사: 특수 요리 레시피
                 player.sendMessage("§d[조합 효과] 고급 요리 레시피가 해금되었습니다!");
-                plugin.getTraitManager().addPoint(player, "chef", 1);
+                if (plugin.getTraitManager() != null) {
+                    plugin.getTraitManager().addPoint(player, "chef", 1);
+                }
                 break;
 
             case "explorer_fisher":
@@ -120,8 +135,8 @@ public class JobComboManager {
 
             default:
                 // 기본 효과: 특성 포인트 보너스
-                String activeJob = plugin.getJobManager().getActiveJob(player);
-                if (activeJob != null) {
+                String activeJob = jobManager.getActiveJob(player);
+                if (activeJob != null && plugin.getTraitManager() != null) {
                     plugin.getTraitManager().addPoint(player, activeJob, 2);
                     player.sendMessage("§d[조합 효과] 특성 포인트 +2!");
                 }
@@ -159,16 +174,25 @@ public class JobComboManager {
 
     private void loadCombos() {
         java.io.File playerDir = new java.io.File(plugin.getDataFolder(), "data/player");
-        if (!playerDir.exists()) return;
-        java.io.File[] files = playerDir.listFiles((d,n)->n.endsWith(".yml"));
-        if (files == null) return;
+        if (!playerDir.exists()) {
+            return;
+        }
+
+        java.io.File[] files = playerDir.listFiles((d, n) -> n.endsWith(".yml"));
+        if (files == null) {
+            return;
+        }
+
         for (java.io.File f : files) {
             try {
-                UUID uuid = UUID.fromString(f.getName().replace(".yml",""));
+                UUID uuid = UUID.fromString(f.getName().replace(".yml", ""));
                 YamlConfiguration cfg = YamlConfiguration.loadConfiguration(f);
                 List<String> list = cfg.getStringList("combos.unlocked");
-                if (!list.isEmpty()) unlockedCombos.put(uuid, new HashSet<>(list));
-            } catch (Exception ignored) {}
+                if (!list.isEmpty()) {
+                    unlockedCombos.put(uuid, new HashSet<>(list));
+                }
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -179,7 +203,9 @@ public class JobComboManager {
     }
 
     public void saveAllAsync() {
-        for (UUID u : unlockedCombos.keySet()) savePlayerCombosAsync(u);
+        for (UUID u : unlockedCombos.keySet()) {
+            savePlayerCombosAsync(u);
+        }
     }
 
     public void saveAll() {

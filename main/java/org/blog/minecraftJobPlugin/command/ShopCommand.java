@@ -1,7 +1,7 @@
 package org.blog.minecraftJobPlugin.command;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;
 import org.blog.minecraftJobPlugin.gui.ShopGUI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;

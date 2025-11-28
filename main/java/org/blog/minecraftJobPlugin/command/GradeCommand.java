@@ -2,7 +2,7 @@ package org.blog.minecraftJobPlugin.command;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
 import org.blog.minecraftJobPlugin.job.JobGradeManager;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;
 import org.blog.minecraftJobPlugin.util.PluginDataUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,6 +10,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import java.util.List;  // 추가
 import java.util.Set;
 
 /**
@@ -53,16 +54,16 @@ public class GradeCommand implements CommandExecutor {
             String grade = gradeManager.getGrade(player, activeJob);
             int activity = gradeManager.getActivity(player, activeJob);
             int questCount = gradeManager.getQuestCount(player, activeJob);
-            
+
             YamlConfiguration grades = dataUtil.loadGlobal("grades");
             String gradeName = grades.getString("grades." + grade + ".name", grade);
             String nextGrade = getNextGrade(grade);
-            
+
             player.sendMessage("§a━━━━━━ " + activeJob + " 등급 정보 ━━━━━━");
             player.sendMessage("§6현재 등급: §e" + grade + " §7(" + gradeName + ")");
             player.sendMessage("§6활동 횟수: §f" + activity);
             player.sendMessage("§6완료 퀘스트: §f" + questCount);
-            
+
             if (nextGrade != null) {
                 String requirement = grades.getString("grades." + nextGrade + ".requirement", "");
                 player.sendMessage("§6다음 등급: §e" + nextGrade);
@@ -76,18 +77,23 @@ public class GradeCommand implements CommandExecutor {
 
         // /grade list - 모든 직업 등급
         if (args[0].equalsIgnoreCase("list")) {
-            Set<String> jobs = jobManager.getPlayerJobs(player);
-            
+            List<String> jobs = jobManager.getPlayerJobs(player);
+
+            if (jobs.isEmpty()) {
+                player.sendMessage("§c보유한 직업이 없습니다.");
+                return true;
+            }
+
             player.sendMessage("§a━━━━━━ 내 직업 등급 ━━━━━━");
             YamlConfiguration grades = dataUtil.loadGlobal("grades");
-            
+
             for (String job : jobs) {
                 String grade = gradeManager.getGrade(player, job);
                 String gradeName = grades.getString("grades." + grade + ".name", grade);
                 int activity = gradeManager.getActivity(player, job);
-                
+
                 player.sendMessage("§6" + job + " §f- §e" + grade + " §7(" + gradeName + ") " +
-                                 "§f활동: " + activity);
+                        "§f활동: " + activity);
             }
             player.sendMessage("§a━━━━━━━━━━━━━━━━━━━━");
             return true;
@@ -103,7 +109,7 @@ public class GradeCommand implements CommandExecutor {
 
             String grade = args[1].toUpperCase();
             YamlConfiguration grades = dataUtil.loadGlobal("grades");
-            
+
             if (!grades.isConfigurationSection("grades." + grade)) {
                 player.sendMessage("§c존재하지 않는 등급입니다.");
                 return true;
@@ -112,7 +118,7 @@ public class GradeCommand implements CommandExecutor {
             String name = grades.getString("grades." + grade + ".name", grade);
             String requirement = grades.getString("grades." + grade + ".requirement", "없음");
             String reward = grades.getString("grades." + grade + ".reward", "없음");
-            
+
             player.sendMessage("§a━━━━━━ 등급 정보: " + grade + " ━━━━━━");
             player.sendMessage("§6등급명: §e" + name);
             player.sendMessage("§6승급 조건: §f" + requirement);

@@ -3,11 +3,16 @@ package org.blog.minecraftJobPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.blog.minecraftJobPlugin.economy.EconomyManager;
+import org.blog.minecraftJobPlugin.econ.EconomyManager;
 import org.blog.minecraftJobPlugin.listeners.*;
-import org.blog.minecraftJobPlugin.manager.*;
+import org.blog.minecraftJobPlugin.manager.JobManager;
+import org.blog.minecraftJobPlugin.skill.SkillManager;
+import org.blog.minecraftJobPlugin.quest.QuestManager;
+import org.blog.minecraftJobPlugin.equipment.EquipmentManager;
+import org.blog.minecraftJobPlugin.job.JobGradeManager;
+import org.blog.minecraftJobPlugin.job.JobComboManager;
+import org.blog.minecraftJobPlugin.skill.TraitManager;
 import org.blog.minecraftJobPlugin.util.ConfigUtil;
-import net.milkbowl.vault.economy.Economy;
 
 public class JobPlugin extends JavaPlugin {
 
@@ -18,11 +23,11 @@ public class JobPlugin extends JavaPlugin {
     private QuestManager questManager;
     private EconomyManager economyManager;
     private EquipmentManager equipmentManager;
-    private GradeManager gradeManager;
-    private ComboManager comboManager;
+    private JobGradeManager gradeManager;
+    private JobComboManager comboManager;
     private TraitManager traitManager;
 
-    private Economy vaultEconomy = null;
+    private Object vaultEconomy = null;  // Economy → Object로 변경
     private boolean useVault = false;
 
     @Override
@@ -32,20 +37,20 @@ public class JobPlugin extends JavaPlugin {
         try {
             // 1. Config 로드
             saveDefaultConfig();
-            ConfigUtil.loadAllConfigs();
+            ConfigUtil.loadAllConfigs(this);
             getLogger().info("설정 파일 로드 완료");
 
             // 2. Vault 초기화
             setupVault();
 
-            // 3. 매니저 초기화
-            this.economyManager = new EconomyManager(this);
+            // 3. 매니저 초기화 - 순서 중요!
             this.jobManager = new JobManager(this);
-            this.skillManager = new SkillManager(this);
-            this.questManager = new QuestManager(this);
+            this.economyManager = new EconomyManager(this, jobManager, vaultEconomy);
+            this.skillManager = new SkillManager(this, jobManager);
+            this.questManager = new QuestManager(this, jobManager, economyManager);
             this.equipmentManager = new EquipmentManager(this);
-            this.gradeManager = new GradeManager(this);
-            this.comboManager = new ComboManager(this);
+            this.gradeManager = new JobGradeManager(this);
+            this.comboManager = new JobComboManager(this);
             this.traitManager = new TraitManager(this);
 
             // 4. 리스너 등록
@@ -95,8 +100,11 @@ public class JobPlugin extends JavaPlugin {
         }
 
         try {
-            RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager()
-                    .getRegistration(Economy.class);
+            // Reflection을 사용하여 Vault 클래스 로드
+            Class<?> economyClass = Class.forName("net.milkbowl.vault.economy.Economy");
+
+            RegisteredServiceProvider<?> rsp = getServer().getServicesManager()
+                    .getRegistration(economyClass);
 
             if (rsp == null) {
                 getLogger().warning("Vault는 설치되어 있으나 Economy 서비스가 등록되지 않았습니다.");
@@ -112,55 +120,60 @@ public class JobPlugin extends JavaPlugin {
             }
 
             useVault = true;
-            getLogger().info("✓ Vault Economy 연동 완료! (제공자: " + vaultEconomy.getName() + ")");
 
-        } catch (NoClassDefFoundError e) {
-            getLogger().warning("Vault 클래스를 찾을 수 없습니다. pom.xml 확인 필요. 내부 Economy 사용.");
+            // getName() 메서드 호출 (Reflection)
+            String providerName = "Unknown";
+            try {
+                providerName = (String) vaultEconomy.getClass().getMethod("getName").invoke(vaultEconomy);
+            } catch (Exception ignored) {
+            }
+
+            getLogger().info("✓ Vault Economy 연동 완료! (제공자: " + providerName + ")");
+
+        } catch (ClassNotFoundException e) {
+            getLogger().info("Vault API를 찾을 수 없습니다. 내부 Economy 사용.");
+            if (warnIfNotFound) {
+                getLogger().warning("build.gradle에 Vault 의존성을 추가하세요.");
+            }
         } catch (Exception e) {
             getLogger().warning("Vault 초기화 중 오류 발생: " + e.getMessage());
             getLogger().warning("내부 Economy 사용.");
         }
     }
 
-    /**
-     * 리스너 등록
-     */
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new JobListener(jobManager), this);
-        getServer().getPluginManager().registerEvents(new SkillListener(skillManager), this);
-        getServer().getPluginManager().registerEvents(new QuestListener(questManager), this);
         getServer().getPluginManager().registerEvents(new JobGuiListener(this), this);
-        getServer().getPluginManager().registerEvents(new EquipmentListener(equipmentManager), this);
-        getServer().getPluginManager().registerEvents(new GradeListener(gradeManager), this);
-
-        // ⭐ PlayerDataListener 추가
         getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
+
+        // 추가 리스너들
+        getServer().getPluginManager().registerEvents(new org.blog.minecraftJobPlugin.listener.QuestTrackerListener(this), this);
+        getServer().getPluginManager().registerEvents(new org.blog.minecraftJobPlugin.listener.SkillBuffListener(this), this);
+        getServer().getPluginManager().registerEvents(new org.blog.minecraftJobPlugin.listener.SkillItemListener(this), this);
+        getServer().getPluginManager().registerEvents(new org.blog.minecraftJobPlugin.listener.ComboCheckListener(this), this);
+        getServer().getPluginManager().registerEvents(new org.blog.minecraftJobPlugin.listener.JobEventListener(this), this);
 
         getLogger().info("모든 이벤트 리스너 등록 완료");
     }
 
-    /**
-     * 명령어 등록
-     */
     private void registerCommands() {
         getCommand("job").setExecutor(new org.blog.minecraftJobPlugin.commands.JobCommand(this));
-        getCommand("quest").setExecutor(new org.blog.minecraftJobPlugin.commands.QuestCommand(this));
+        getCommand("quest").setExecutor(new org.blog.minecraftJobPlugin.command.QuestCommand(this));
+        getCommand("shop").setExecutor(new org.blog.minecraftJobPlugin.command.ShopCommand(this));
+        getCommand("skill").setExecutor(new org.blog.minecraftJobPlugin.command.SkillCommand(this));
+        getCommand("combo").setExecutor(new org.blog.minecraftJobPlugin.command.ComboCommand(this));
+        getCommand("grade").setExecutor(new org.blog.minecraftJobPlugin.command.GradeCommand(this));
+        getCommand("upgrade").setExecutor(new org.blog.minecraftJobPlugin.command.UpgradeCommand(this));
         getLogger().info("명령어 등록 완료");
     }
 
-    /**
-     * 자동 저장 스케줄러 시작
-     */
     private void startAutoSaveScheduler() {
         int saveIntervalSeconds = getConfig().getInt("economy.autosave_seconds", 300);
         long saveIntervalTicks = saveIntervalSeconds * 20L;
 
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (getConfig().getBoolean("performance.async_save", true)) {
-                // 비동기 저장
                 Bukkit.getScheduler().runTaskAsynchronously(this, this::saveAllData);
             } else {
-                // 동기 저장
                 saveAllData();
             }
         }, saveIntervalTicks, saveIntervalTicks);
@@ -168,9 +181,6 @@ public class JobPlugin extends JavaPlugin {
         getLogger().info("자동 저장 스케줄러 시작 (주기: " + saveIntervalSeconds + "초)");
     }
 
-    /**
-     * 모든 데이터 저장
-     */
     private void saveAllData() {
         try {
             jobManager.saveAll();
@@ -237,11 +247,11 @@ public class JobPlugin extends JavaPlugin {
         return equipmentManager;
     }
 
-    public GradeManager getGradeManager() {
+    public JobGradeManager getGradeManager() {
         return gradeManager;
     }
 
-    public ComboManager getComboManager() {
+    public JobComboManager getComboManager() {
         return comboManager;
     }
 
@@ -249,7 +259,7 @@ public class JobPlugin extends JavaPlugin {
         return traitManager;
     }
 
-    public Economy getVaultEconomy() {
+    public Object getVaultEconomy() {  // Economy → Object로 변경
         return vaultEconomy;
     }
 

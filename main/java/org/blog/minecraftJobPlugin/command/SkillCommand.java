@@ -1,7 +1,7 @@
 package org.blog.minecraftJobPlugin.command;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;
 import org.blog.minecraftJobPlugin.job.JobMeta;
 import org.blog.minecraftJobPlugin.skill.SkillManager;
 import org.blog.minecraftJobPlugin.gui.SkillTreeGUI;
@@ -80,7 +80,7 @@ public class SkillCommand implements CommandExecutor {
 
             String skillName = args[1];
             JobMeta meta = jobManager.getJobMeta(activeJob);
-            
+
             if (meta == null || !meta.skills.contains(skillName)) {
                 player.sendMessage("§c해당 스킬을 보유하지 않았습니다.");
                 player.sendMessage("§e사용 가능한 스킬: " + String.join(", ", meta.skills));
@@ -103,7 +103,7 @@ public class SkillCommand implements CommandExecutor {
 
             String skillName = args[1];
             JobMeta meta = jobManager.getJobMeta(activeJob);
-            
+
             if (meta == null || !meta.skills.contains(skillName)) {
                 player.sendMessage("§c해당 스킬을 보유하지 않았습니다.");
                 return true;

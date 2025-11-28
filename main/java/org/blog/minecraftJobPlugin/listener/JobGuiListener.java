@@ -13,7 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.blog.minecraftJobPlugin.JobPlugin;
 import org.blog.minecraftJobPlugin.job.Job;
 import org.blog.minecraftJobPlugin.manager.JobManager;
-import org.blog.minecraftJobPlugin.economy.EconomyManager;
+import org.blog.minecraftJobPlugin.econ.EconomyManager;  // economy → econ으로 수정
 
 import java.util.List;
 
@@ -133,7 +133,7 @@ public class JobGuiListener implements Listener {
         double cost = calculateJobCost(player, jobName);
 
         // 4. 잔액 확인
-        double balance = economyManager.getBalance(player.getUniqueId());
+        double balance = economyManager.getBalanceDouble(player);
         if (balance < cost) {
             String currency = plugin.getConfig().getString("economy.currency_symbol", "원");
             String message = plugin.getConfig().getString("messages.job_insufficient_funds",
@@ -147,7 +147,7 @@ public class JobGuiListener implements Listener {
 
         // 5. 비용 차감
         if (cost > 0) {
-            economyManager.withdraw(player.getUniqueId(), cost);
+            economyManager.takeMoney(player, (int)cost);
         }
 
         // 6. 직업 획득
@@ -359,7 +359,6 @@ public class JobGuiListener implements Listener {
         }
 
         // 상점 아이템 구매/판매 로직
-        // TODO: ShopManager를 통한 구매/판매 처리
         player.sendMessage("§e상점 기능은 아직 구현 중입니다.");
     }
 
@@ -374,7 +373,6 @@ public class JobGuiListener implements Listener {
         }
 
         // 스킬 학습 로직
-        // TODO: SkillManager를 통한 스킬 학습
         player.sendMessage("§e스킬 시스템은 아직 구현 중입니다.");
     }
 
@@ -389,7 +387,6 @@ public class JobGuiListener implements Listener {
         }
 
         // 퀘스트 완료/보상 로직
-        // TODO: QuestManager를 통한 퀘스트 처리
         player.sendMessage("§e퀘스트 시스템은 아직 구현 중입니다.");
     }
 }

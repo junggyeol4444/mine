@@ -1,7 +1,7 @@
 package org.blog.minecraftJobPlugin.skill;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;  // 이 줄 수정
 import org.blog.minecraftJobPlugin.util.PluginDataUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;

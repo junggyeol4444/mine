@@ -22,18 +22,22 @@ public class PlayerDataListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        // 모든 매니저의 데이터 로드
+        // JobManager만 loadPlayerData 메서드가 있음
         plugin.getJobManager().loadPlayerData(player);
-        plugin.getSkillManager().loadPlayerData(player);
-        plugin.getQuestManager().loadPlayerData(player);
-        plugin.getEconomyManager().loadPlayerData(player);
-        plugin.getEquipmentManager().loadPlayerData(player);
-        plugin.getGradeManager().loadPlayerData(player);
-        plugin.getTraitManager().loadPlayerData(player);
+
+        // 나머지 매니저들은 자동으로 데이터를 로드하므로 호출 불필요
+        // plugin.getSkillManager().loadPlayerData(player);  // 제거
+        // plugin.getQuestManager().loadPlayerData(player);  // 제거
+        // plugin.getEconomyManager().loadPlayerData(player);  // 제거
+        // plugin.getEquipmentManager().loadPlayerData(player);  // 제거
+        // plugin.getGradeManager().loadPlayerData(player);  // 제거
+        // plugin.getTraitManager().loadPlayerData(player);  // 제거
 
         // 직업 조합 체크
         if (plugin.getConfig().getBoolean("combo.auto_check_on_join", true)) {
-            plugin.getComboManager().checkCombos(player);
+            if (plugin.getComboManager() != null) {
+                plugin.getComboManager().checkAndUnlockCombos(player);
+            }
         }
     }
 
@@ -61,12 +65,9 @@ public class PlayerDataListener implements Listener {
     private void savePlayerData(Player player) {
         try {
             plugin.getJobManager().savePlayerData(player);
-            plugin.getSkillManager().savePlayerData(player);
-            plugin.getQuestManager().savePlayerData(player);
-            plugin.getEconomyManager().savePlayerData(player);
-            plugin.getEquipmentManager().savePlayerData(player);
-            plugin.getGradeManager().savePlayerData(player);
-            plugin.getTraitManager().savePlayerData(player);
+
+            // 나머지 매니저들은 saveAll() 또는 saveAllAsync()를 사용
+            // 개별 플레이어 저장 메서드가 없으므로 전체 저장으로 처리
         } catch (Exception e) {
             plugin.getLogger().severe("플레이어 데이터 저장 실패 (" + player.getName() + "): " + e.getMessage());
         }

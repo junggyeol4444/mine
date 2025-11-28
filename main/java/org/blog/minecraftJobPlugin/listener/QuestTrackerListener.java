@@ -1,7 +1,7 @@
 package org.blog.minecraftJobPlugin.listener;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;  // job → manager로 수정
 import org.blog.minecraftJobPlugin.quest.QuestManager;
 import org.blog.minecraftJobPlugin.quest.QuestMeta;
 import org.bukkit.Material;

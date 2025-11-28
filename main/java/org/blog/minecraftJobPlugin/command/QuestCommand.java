@@ -2,7 +2,7 @@ package org.blog.minecraftJobPlugin.command;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
 import org.blog.minecraftJobPlugin.gui.QuestGUI;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;
 import org.blog.minecraftJobPlugin.quest.QuestManager;
 import org.blog.minecraftJobPlugin.quest.QuestMeta;
 import org.blog.minecraftJobPlugin.util.PluginDataUtil;
@@ -66,7 +66,7 @@ public class QuestCommand implements CommandExecutor {
 
             player.sendMessage("§a━━━━━━ " + activeJob + " 퀘스트 ━━━━━━");
             YamlConfiguration cfg = dataUtil.loadPlayerConfig(player.getUniqueId());
-            
+
             for (QuestMeta quest : quests) {
                 int progress = cfg.getInt("quests." + quest.id + ".progress", 0);
                 player.sendMessage("§6[" + quest.id + "] §e" + quest.name);
@@ -95,7 +95,7 @@ public class QuestCommand implements CommandExecutor {
 
             player.sendMessage("§a━━━━━━ 진행 중인 퀘스트 ━━━━━━");
             boolean hasProgress = false;
-            
+
             for (QuestMeta quest : quests) {
                 int progress = cfg.getInt("quests." + quest.id + ".progress", 0);
                 if (progress > 0) {
@@ -103,7 +103,7 @@ public class QuestCommand implements CommandExecutor {
                     player.sendMessage("§6" + quest.name + " §7- 진행: §e" + progress);
                 }
             }
-            
+
             if (!hasProgress) {
                 player.sendMessage("§7진행 중인 퀘스트가 없습니다.");
             }

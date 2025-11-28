@@ -1,7 +1,7 @@
 package org.blog.minecraftJobPlugin.econ;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;  // job → manager로 수정
 import org.blog.minecraftJobPlugin.util.PluginDataUtil;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -31,7 +31,9 @@ public class EconomyManager {
         loadBalances();
     }
 
-    private boolean hasVault() { return vaultEcon != null; }
+    private boolean hasVault() {
+        return vaultEcon != null;
+    }
 
     private double vaultGetBalance(Player player) {
         try {

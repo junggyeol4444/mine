@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.blog.minecraftJobPlugin.JobPlugin;
 import org.blog.minecraftJobPlugin.job.Job;
+import org.blog.minecraftJobPlugin.job.JobMeta;
 import org.blog.minecraftJobPlugin.util.ConfigUtil;
 
 import java.io.File;
@@ -68,6 +69,17 @@ public class JobManager {
     }
 
     /**
+     * 직업 이름으로 JobMeta 가져오기 (추가)
+     */
+    public JobMeta getJobMeta(String jobName) {
+        YamlConfiguration config = ConfigUtil.getConfig("jobs");
+        if (config != null && config.isConfigurationSection("jobs." + jobName)) {
+            return new JobMeta(jobName, config.getConfigurationSection("jobs." + jobName));
+        }
+        return null;
+    }
+
+    /**
      * 모든 직업 목록 반환
      */
     public List<Job> getAllJobs() {
@@ -86,11 +98,22 @@ public class JobManager {
     }
 
     /**
-     * 플레이어가 보유한 모든 직업 목록 반환
+     * 플레이어가 보유한 모든 직업 목록 반환 (List 버전)
      */
     public List<String> getPlayerJobs(Player player) {
         UUID uuid = player.getUniqueId();
         return new ArrayList<>(playerJobs.getOrDefault(uuid, new ArrayList<>()));
+    }
+
+    /**
+     * 플레이어가 보유한 모든 직업 목록 반환 (Set 버전 - 추가)
+     */
+    public Set<String> getPlayerJobs(UUID uuid) {
+        return new HashSet<>(playerJobs.getOrDefault(uuid, new ArrayList<>()));
+    }
+
+    public Set<String> getPlayerJobs(Player player, boolean asSet) {
+        return new HashSet<>(playerJobs.getOrDefault(player.getUniqueId(), new ArrayList<>()));
     }
 
     /**
@@ -121,7 +144,7 @@ public class JobManager {
 
         // 조합 체크
         if (plugin.getComboManager() != null) {
-            plugin.getComboManager().checkCombos(player);
+            plugin.getComboManager().checkAndUnlockCombos(player);
         }
 
         // 데이터 저장
@@ -268,6 +291,13 @@ public class JobManager {
         if (plugin.getConfig().getBoolean("debug.log_save_operations", false)) {
             plugin.getLogger().info("모든 플레이어의 직업 데이터 저장 완료");
         }
+    }
+
+    /**
+     * 비동기 저장 (추가)
+     */
+    public void saveAllAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveAll);
     }
 
     /**

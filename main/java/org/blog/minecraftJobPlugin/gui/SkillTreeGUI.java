@@ -5,7 +5,7 @@ import org.blog.minecraftJobPlugin.JobPlugin;
 import org.blog.minecraftJobPlugin.skill.SkillManager;
 import org.blog.minecraftJobPlugin.skill.TraitManager;
 import org.blog.minecraftJobPlugin.skill.TraitMeta;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.manager.JobManager;  // job → manager로 수정
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;

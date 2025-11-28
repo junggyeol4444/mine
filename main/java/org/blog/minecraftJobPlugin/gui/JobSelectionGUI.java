@@ -1,8 +1,8 @@
 package org.blog.minecraftJobPlugin.gui;
 
 import org.blog.minecraftJobPlugin.JobPlugin;
-import org.blog.minecraftJobPlugin.job.JobMeta;
-import org.blog.minecraftJobPlugin.job.JobManager;
+import org.blog.minecraftJobPlugin.job.Job;
+import org.blog.minecraftJobPlugin.manager.JobManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -28,17 +28,19 @@ public class JobSelectionGUI {
     }
 
     public void open() {
-        List<JobMeta> jobs = jobManager.getAllJobs();
+        List<Job> jobs = jobManager.getAllJobs();
         int size = 9;
         while (size < jobs.size()) size += 9;
         Inventory inv = Bukkit.createInventory(null, size, TITLE);
+
         for (int i = 0; i < jobs.size(); i++) {
-            JobMeta jm = jobs.get(i);
+            Job jm = jobs.get(i);
             ItemStack item = new ItemStack(Material.PAPER);
             ItemMeta meta = item.getItemMeta();
-            meta.setDisplayName(ChatColor.AQUA + jm.display);
+            meta.setDisplayName(ChatColor.AQUA + jm.getDisplayName());
+
             List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.WHITE + jm.description);
+            lore.add(ChatColor.WHITE + jm.getDescription());
             lore.add("");
             lore.add(ChatColor.YELLOW + "좌클릭: 직업 획득 / 우클릭: 장착");
             meta.setLore(lore);
