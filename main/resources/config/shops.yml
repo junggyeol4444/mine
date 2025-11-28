@@ -1,0 +1,101 @@
+  ```yaml
+  # 직업 전용 상점 설정
+  shops:
+    explorer:
+      items:
+        - name: "지도"
+          price: 100
+          material: PAPER
+          amount: 1
+        - name: "나침반"
+          price: 75
+          material: COMPASS
+          amount: 1
+
+    carpenter:
+      items:
+        - name: "기본 도끼"
+          price: 70
+          material: IRON_AXE
+          amount: 1
+        - name: "목재 묶음"
+          price: 25
+          material: OAK_LOG
+          amount: 16
+
+    miner:
+      items:
+        - name: "기본 곡괭이"
+          price: 80
+          material: IRON_PICKAXE
+          amount: 1
+        - name: "화약"
+          price: 60
+          material: GUNPOWDER
+          amount: 8
+
+    hunter:
+      items:
+        - name: "활"
+          price: 90
+          material: BOW
+          amount: 1
+        - name: "화살 묶음"
+          price: 25
+          material: ARROW
+          amount: 64
+
+    farmer:
+      items:
+        - name: "씨앗 상자"
+          price: 30
+          material: WHEAT_SEEDS
+          amount: 32
+        - name: "비료"
+          price: 20
+          material: BONE_MEAL
+          amount: 16
+
+    fisher:
+      items:
+        - name: "낚싯대"
+          price: 60
+          material: FISHING_ROD
+          amount: 1
+        - name: "미끼 상자"
+          price: 20
+          material: ROTTEN_FLESH
+          amount: 16
+
+    blacksmith:
+      items:
+        - name: "대장 도구 세트"
+          price: 200
+          material: ANVIL
+          amount: 1
+        - name: "강화 재료"
+          price: 120
+          material: IRON_INGOT
+          amount: 16
+
+    alchemist:
+      items:
+        - name: "포션 재료 상자"
+          price: 150
+          material: BLAZE_POWDER
+          amount: 8
+        - name: "에센스"
+          price: 200
+          material: GUNPOWDER
+          amount: 4
+
+    chef:
+      items:
+        - name: "고급 식재료"
+          price: 120
+          material: COOKED_BEEF
+          amount: 16
+        - name: "양념 세트"
+          price: 40
+          material: SPICE (PAPER)
+          amount: 1
