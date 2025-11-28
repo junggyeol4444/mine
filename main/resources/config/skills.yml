@@ -1,0 +1,94 @@
+  ```yaml
+  # 스킬 정의 (스킬명 아래에 display, cooldown(초), levels)
+  skills:
+    geoScan:
+      display: "지형 스캔"
+      cooldown: 300
+      levels:
+        1:
+          effect: "근처 지형 하이라이트"
+        2:
+          effect: "반경 증가"
+        3:
+          effect: "희귀 구조물 위치 추적"
+
+    warpPoint:
+      display: "워프 지점 설치"
+      cooldown: 600
+      levels:
+        1:
+          effect: "1개 워프 설치"
+        2:
+          effect: "2개 워프 설치"
+
+    fastLumber:
+      display: "빠른 벌목"
+      cooldown: 180
+      levels:
+        1:
+          effect: "벌목 속도 +10%"
+        2:
+          effect: "벌목 속도 +20%"
+
+    veinDetect:
+      display: "광맥 감지"
+      cooldown: 240
+      levels:
+        1:
+          effect: "근처 광맥 표시"
+        2:
+          effect: "희귀 광석 우선 탐지"
+
+    criticalShot:
+      display: "치명타 사격"
+      cooldown: 30
+      levels:
+        1:
+          effect: "치명타 확률 +5%"
+        2:
+          effect: "치명타 데미지 +10%"
+
+    bumperCrop:
+      display: "풍작"
+      cooldown: 600
+      levels:
+        1:
+          effect: "수확량 +10%"
+        2:
+          effect: "수확량 +25%"
+
+    rareCatch:
+      display: "희귀 입질"
+      cooldown: 360
+      levels:
+        1:
+          effect: "낚시 희귀 확률 증가"
+        2:
+          effect: "도감 등록 확률 증가"
+
+    precisionForge:
+      display: "정밀 단조"
+      cooldown: 300
+      levels:
+        1:
+          effect: "장비 내구도 감소율 감소"
+        2:
+          effect: "추가 인첸트 확률"
+
+    doubleBrew:
+      display: "이중 증류"
+      cooldown: 420
+      levels:
+        1:
+          effect: "포션 효과 1.2배"
+        2:
+          effect: "효과 지속 시간 증가"
+
+    gourmetCook:
+      display: "명장 요리"
+      cooldown: 180
+      levels:
+        1:
+          effect: "음식 버프 효과 증가"
+        2:
+          effect: "음식 특수 효과 확률 증가"

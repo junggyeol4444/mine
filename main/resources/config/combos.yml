@@ -1,0 +1,23 @@
+  ```yaml
+  # 직업 조합(시너지) 정의
+  combos:
+    miner_blacksmith:
+      unlock: "광부 + 대장장이 조합: 특수 무기 제작 가능"
+      requirements:
+        - "miner"
+        - "blacksmith"
+      effect: "특수 무기 제작 레시피 해금"
+
+    farmer_chef:
+      unlock: "농부 + 요리사 조합: 특수 요리 레시피"
+      requirements:
+        - "farmer"
+        - "chef"
+      effect: "고급 요리 레시피 해금"
+
+    explorer_fisher:
+      unlock: "탐험가 + 어부: 해상 지도 제작"
+      requirements:
+        - "explorer"
+        - "fisher"
+      effect: "해상 워프 포인트 추가"
