@@ -1,463 +1,512 @@
-# 📦 MinecraftJobPlugin - 직업 중복 방지 및 비용 시스템 적용 가이드
+# MinecraftJobPlugin
 
-## 🎯 변경 사항 요약
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.10-green.svg)](https://www.minecraft.net/)
+[![Spigot API](https://img.shields.io/badge/Spigot%20API-1.21.10-orange.svg)](https://www.spigotmc.org/)
+[![License](https://img.shields.io/badge/license-Custom-blue.svg)]()
 
-1. **직업 중복 획득 방지**
-   - 한 번 획득한 직업은 다시 획득 불가
-   - "이미 보유한 직업입니다!" 메시지 출력
+마인크래프트 서버를 위한 종합 직업 시스템 플러그인입니다. 플레이어가 다양한 직업을 선택하고, 스킬을 습득하며, 퀘스트를 완료하고, 전용 상점을 이용할 수 있는 RPG 스타일 게임플레이를 제공합니다.
 
-2. **직업 획득 비용 시스템**
-   - 첫 직업: 무료 (0원)
-   - 두 번째 직업: 50,000원
-   - 세 번째 직업: 100,000원
-   - 네 번째 이후: 200,000원
+## 📋 목차
 
-3. **자동 데이터 로드/저장**
-   - 플레이어 접속 시 자동 로드
-   - 플레이어 퇴장 시 자동 저장 (비동기)
-   - 5분마다 자동 저장
+- [주요 기능](#-주요 기능)
+- [시스템 구조](#-시스템 구조)
+- [설치 방법](#-설치 방법)
+- [명령어](#-명령어)
+- [설정](#-설정)
+- [직업 시스템](#-직업 시스템)
+- [스킬 시스템](#-스킬 시스템)
+- [퀘스트 시스템](#-퀘스트 시스템)
+- [등급 시스템](#-등급 시스템)
+- [경제 시스템](#-경제 시스템)
+- [개발자 정보](#-개발자 정보)
 
----
+## 🎮 주요 기능
 
-## 📂 수정/추가된 파일 목록
+### 1. **직업 시스템 (Job System)**
+- 8개의 독특한 직업 (탐험가, 목수, 광부, 사냥꾼, 농부, 어부, 대장장이, 연금술사, 요리사)
+- 다중 직업 보유 가능 (설정 가능)
+- 직업별 시작 아이템 지급
+- 직업 조합(콤보) 시스템으로 시너지 효과
+- 희귀도 등급별 직업 분류
 
-### 1️⃣ **필수 수정 파일**
+### 2. **스킬 시스템 (Skill System)**
+- 18개 이상의 직업별 고유 스킬
+- 레벨업 시스템 (최대 10레벨)
+- 경험치 획득 및 스킬 성장
+- 스킬북을 통한 스킬 발동
+- 쿨타임 및 레벨별 효과 증가
+
+### 3. **퀘스트 시스템 (Quest System)**
+- 직업별 일일/주간 퀘스트
+- 자동 진행도 추적
+- 다양한 퀘스트 타입 (블록 채집, 몹 처치, 작물 수확, 낚시)
+- 완료 시 금전 및 특성 포인트 보상
+
+### 4. **등급 시스템 (Grade System)**
+- 5단계 등급 (D → C → B → A → S)
+- 활동 횟수 및 퀘스트 완료로 승급
+- 등급별 상점 할인 및 스킬 경험치 보너스
+- 등급별 전용 보상 및 칭호
+
+### 5. **경제 시스템 (Economy System)**
+- Vault 연동 지원 (선택사항)
+- 내부 경제 시스템
+- 직업별 전용 상점
+- 구매/판매 시스템
+- 등급별 할인 적용
+
+### 6. **장비 강화 시스템**
+- 아이템 업그레이드 (최대 20단계)
+- 랜덤 인챈트 강화
+- 비용 증가 시스템
+- 내구성 제외 인챈트 시스템
+
+### 7. **특성 시스템 (Trait System)**
+- 직업별 고유 특성
+- 퀘스트 완료 시 포인트 획득
+- 특성 선택을 통한 캐릭터 커스터마이징
+
+### 8. **데이터 관리**
+- YAML 기반 데이터 저장
+- 비동기 저장으로 서버 성능 최적화
+- 자동 저장 시스템
+- 플레이어별 개별 데이터 관리
+
+## 🏗 시스템 구조
 
 ```
-src/main/resources/
-├── config.yml                    ⭐ 새 버전으로 교체
-└── plugin.yml                    (softdepend: [Vault] 추가)
-
-src/main/java/org/blog/minecraftJobPlugin/
-├── JobPlugin.java                ⭐ 완전 교체
-├── commands/
-│   └── JobCommand.java           ⭐ 완전 교체
-├── listeners/
-│   ├── JobGuiListener.java       ⭐ 완전 교체
-│   └── PlayerDataListener.java   ⭐ 새로 추가
-└── manager/
-    └── JobManager.java            ⭐ 완전 교체
+MinecraftJobPlugin/
+├── src/main/java/org/blog/minecraftJobPlugin/
+│   ├── JobPlugin.java                    # 메인 플러그인 클래스
+│   ├── command/                          # 명령어 핸들러
+│   │   ├── ComboCommand.java
+│   │   ├── GradeCommand.java
+│   │   ├── JobCommand.java
+│   │   ├── QuestCommand.java
+│   │   ├── ShopCommand.java
+│   │   ├── SkillCommand.java
+│   │   └── UpgradeCommand.java
+│   ├── econ/                            # 경제 시스템
+│   │   └── EconomyManager.java
+│   ├── equipment/                       # 장비 시스템
+│   │   └── EquipmentManager.java
+│   ├── gui/                            # GUI 인터페이스
+│   │   ├── JobSelectionGUI.java
+│   │   ├── QuestGUI.java
+│   │   ├── ShopGUI.java
+│   │   └── SkillTreeGUI.java
+│   ├── job/                            # 직업 관련 클래스
+│   │   ├── Job.java
+│   │   ├── JobMeta.java
+│   │   ├── JobComboManager.java
+│   │   └── JobGradeManager.java
+│   ├── listener/                       # 이벤트 리스너
+│   │   ├── ComboCheckListener.java
+│   │   ├── JobEventListener.java
+│   │   ├── JobGuiListener.java
+│   │   ├── PlayerDataListener.java
+│   │   ├── QuestTrackerListener.java
+│   │   ├── SkillBuffListener.java
+│   │   └── SkillItemListener.java
+│   ├── manager/                        # 핵심 관리자
+│   │   └── JobManager.java
+│   ├── quest/                         # 퀘스트 시스템
+│   │   ├── QuestManager.java
+│   │   ├── QuestMeta.java
+│   │   └── QuestProgress.java
+│   ├── skill/                         # 스킬 시스템
+│   │   ├── SkillManager.java
+│   │   ├── SkillMeta.java
+│   │   ├── TraitManager.java
+│   │   └── TraitMeta.java
+│   └── util/                          # 유틸리티
+│       ├── ActionBarUtil.java
+│       ├── ConfigUtil.java
+│       ├── LocalStorage.java
+│       └── PluginDataUtil.java
+└── src/main/resources/
+    ├── plugin.yml                     # 플러그인 메타데이터
+    ├── config.yml                     # 메인 설정
+    └── config/                        # 상세 설정 파일
+        ├── jobs.yml
+        ├── skills.yml
+        ├── quests.yml
+        ├── shops.yml
+        ├── grades.yml
+        ├── combos.yml
+        └── traits.yml
 ```
 
----
+## 📦 설치 방법
 
-## 📋 상세 파일별 변경 내용
+### 필수 요구사항
+- **Minecraft 서버**: Paper/Spigot 1.21.10 이상
+- **Java**: Java 17 이상
+- **선택사항**: Vault 플러그인 (외부 경제 연동)
 
-### **1. config.yml**
-**위치:** `src/main/resources/config.yml`
+### 설치 단계
 
-**추가된 설정:**
+1. **플러그인 다운로드**
+   ```bash
+   # 릴리즈 페이지에서 최신 .jar 파일 다운로드
+   ```
+
+2. **플러그인 설치**
+   ```bash
+   # 서버의 plugins 폴더에 .jar 파일 복사
+   cp MinecraftJobPlugin-1.0.0.jar /서버경로/plugins/
+   ```
+
+3. **서버 시작**
+   ```bash
+   # 서버 시작 (설정 파일 자동 생성)
+   ./start.sh
+   ```
+
+4. **설정 파일 편집** (선택사항)
+   ```bash
+   # /plugins/MinecraftJobPlugin/config.yml 및 하위 설정 파일 수정
+   ```
+
+5. **서버 재시작 또는 리로드**
+   ```bash
+   /reload confirm
+   # 또는
+   /job reload  # 관리자 권한 필요
+   ```
+
+## 🎯 명령어
+
+### 플레이어 명령어
+
+#### `/job` - 직업 관리
+```
+/job              # 직업 선택 GUI 열기
+/job list         # 모든 직업 목록 보기
+/job info <직업>   # 특정 직업 정보 확인
+/job my          # 내 직업 정보 보기
+```
+
+#### `/skill` - 스킬 관리
+```
+/skill            # 스킬 트리 GUI 열기
+/skill list       # 내 스킬 목록 보기
+/skill use <스킬>  # 스킬 사용
+/skill info <스킬> # 스킬 상세 정보
+```
+
+#### `/quest` - 퀘스트 관리
+```
+/quest              # 퀘스트 GUI 열기
+/quest list         # 퀘스트 목록 보기
+/quest submit <ID>  # 퀘스트 제출
+/quest progress     # 진행 중인 퀘스트 확인
+```
+
+#### `/shop` - 상점
+```
+/shop             # 현재 직업 상점 열기
+```
+
+#### `/upgrade` - 장비 강화
+```
+/upgrade          # 손에 든 아이템 업그레이드
+```
+
+#### `/combo` - 직업 조합
+```
+/combo            # 내 조합 목록
+/combo list       # 모든 조합 보기
+/combo check      # 해금 가능 확인
+```
+
+#### `/grade` - 등급 관리
+```
+/grade            # 현재 등급 보기
+/grade list       # 모든 직업 등급
+/grade info <등급> # 등급 상세 정보
+/grade check      # 승급 확인
+```
+
+### 관리자 명령어
+
+```
+/job reload       # 플러그인 리로드
+/job debug        # 디버그 정보 출력
+```
+
+## ⚙ 설정
+
+### config.yml - 메인 설정
+
 ```yaml
+# 경제 시스템
+economy:
+  default_reward: 50           # 기본 행동 보상
+  currency_symbol: "원"        # 통화 기호
+  starting_balance: 0          # 시작 금액
+  autosave_seconds: 300        # 자동 저장 주기 (초)
+
+# 장비 업그레이드
+equipment:
+  max_upgrade_level: 20        # 최대 업그레이드 레벨
+  upgrade_base_price: 100      # 기본 가격
+  upgrade_multiplier: 1.8      # 가격 배율
+  max_enchant_level_per_type: 10  # 인챈트별 최대 레벨
+
+# 직업 시스템
 job:
-  can_abandon_job: false          # 직업 포기 불가
-  first_job_cost: 0               # 첫 직업 무료
-  second_job_cost: 50000          # 두 번째 직업 비용
-  third_job_cost: 100000          # 세 번째 직업 비용
-  additional_job_cost: 200000     # 네 번째 이후 비용
+  max_jobs_per_player: -1      # 최대 직업 수 (-1 = 무제한)
+  first_job_cost: 0            # 첫 직업 비용
+  second_job_cost: 50000       # 두 번째 직업 비용
+  third_job_cost: 100000       # 세 번째 직업 비용
 
-messages:
-  job_already_owned: "§c이미 보유한 직업입니다!"
-  job_acquired_paid: "§a직업을 획득했습니다: §b%job% §7(비용: §e%cost%%currency%§7)"
-  job_insufficient_funds: "§c직업을 획득하기 위한 돈이 부족합니다!"
-  job_max_reached: "§c최대 직업 개수에 도달했습니다!"
+# Vault 연동
+vault:
+  use_vault_economy: true      # Vault 사용 여부
+  warn_if_not_found: false     # 미설치 시 경고
+
+# 성능 최적화
+performance:
+  async_save: true             # 비동기 저장
+  use_cache: true              # 캐시 사용
 ```
 
----
-
-### **2. JobManager.java**
-**위치:** `src/main/java/org/blog/minecraftJobPlugin/manager/JobManager.java`
-
-**추가된 필드:**
-```java
-// 플레이어 데이터 (UUID -> 보유 직업 목록)
-private final Map<UUID, List<String>> playerJobs = new ConcurrentHashMap<>();
-
-// 플레이어 활성 직업 (UUID -> 장착 중인 직업)
-private final Map<UUID, String> activeJobs = new ConcurrentHashMap<>();
-```
-
-**추가된 메서드:**
-- `hasJob(Player, String)` - 직업 보유 여부 확인
-- `getPlayerJobs(Player)` - 보유 직업 목록 반환
-- `addJob(Player, String)` - 직업 추가 (중복 방지)
-- `removeJob(Player, String)` - 직업 제거
-- `setActiveJob(Player, String)` - 활성 직업 설정
-- `getActiveJob(Player)` - 활성 직업 반환
-- `savePlayerData(Player)` - 플레이어 데이터 저장
-- `loadPlayerData(Player)` - 플레이어 데이터 로드
-- `saveAll()` - 모든 플레이어 데이터 저장
-- `canAcquireMoreJobs(Player)` - 추가 직업 획득 가능 여부
-- `canAbandonJob()` - 직업 포기 가능 여부
-
----
-
-### **3. JobGuiListener.java**
-**위치:** `src/main/java/org/blog/minecraftJobPlugin/listeners/JobGuiListener.java`
-
-**핵심 변경사항:**
-
-**acquireJob() 메서드:**
-```java
-private void acquireJob(Player player, Job job) {
-    // 1. 중복 확인
-    if (jobManager.hasJob(player, jobName)) {
-        player.sendMessage("§c이미 보유한 직업입니다!");
-        return;
-    }
-    
-    // 2. 최대 직업 개수 확인
-    if (maxJobs > 0 && ownedJobs.size() >= maxJobs) {
-        player.sendMessage("§c최대 직업 개수에 도달했습니다!");
-        return;
-    }
-    
-    // 3. 비용 계산 및 확인
-    double cost = calculateJobCost(player, jobName);
-    if (balance < cost) {
-        player.sendMessage("§c돈이 부족합니다!");
-        return;
-    }
-    
-    // 4. 비용 차감
-    economyManager.withdraw(player.getUniqueId(), cost);
-    
-    // 5. 직업 추가
-    jobManager.addJob(player, jobName);
-}
-```
-
-**calculateJobCost() 메서드:**
-```java
-private double calculateJobCost(Player player, String jobName) {
-    // 특정 직업 비용이 설정되어 있는지 확인
-    if (plugin.getConfig().contains("job.job_specific_costs." + jobName)) {
-        return plugin.getConfig().getDouble("job.job_specific_costs." + jobName);
-    }
-    
-    // 보유 직업 개수에 따른 비용
-    int ownedJobCount = jobManager.getPlayerJobs(player).size();
-    
-    switch (ownedJobCount) {
-        case 0: return plugin.getConfig().getDouble("job.first_job_cost", 0);
-        case 1: return plugin.getConfig().getDouble("job.second_job_cost", 50000);
-        case 2: return plugin.getConfig().getDouble("job.third_job_cost", 100000);
-        default: return plugin.getConfig().getDouble("job.additional_job_cost", 200000);
-    }
-}
-```
-
----
-
-### **4. PlayerDataListener.java** ⭐ 새로 추가
-**위치:** `src/main/java/org/blog/minecraftJobPlugin/listeners/PlayerDataListener.java`
-
-**기능:**
-- 플레이어 접속 시 모든 데이터 로드
-- 플레이어 퇴장 시 모든 데이터 저장 (비동기)
-- 직업 조합 자동 체크
-
-```java
-@EventHandler
-public void onPlayerJoin(PlayerJoinEvent event) {
-    Player player = event.getPlayer();
-    plugin.getJobManager().loadPlayerData(player);
-    // ... 다른 매니저들도 로드
-}
-
-@EventHandler
-public void onPlayerQuit(PlayerQuitEvent event) {
-    Player player = event.getPlayer();
-    // 비동기 저장
-    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-        savePlayerData(player);
-    });
-}
-```
-
----
-
-### **5. JobPlugin.java**
-**위치:** `src/main/java/org/blog/minecraftJobPlugin/JobPlugin.java`
-
-**변경사항:**
-- `registerListeners()` 메서드에 `PlayerDataListener` 추가
-- Vault 초기화 로직 개선
-- 자동 저장 스케줄러 추가
-
-```java
-private void registerListeners() {
-    // ... 기존 리스너들
-    getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
-}
-
-private void startAutoSaveScheduler() {
-    int saveIntervalSeconds = getConfig().getInt("economy.autosave_seconds", 300);
-    // 5분마다 자동 저장
-    Bukkit.getScheduler().runTaskTimer(this, this::saveAllData, 
-        saveIntervalTicks, saveIntervalTicks);
-}
-```
-
----
-
-### **6. JobCommand.java**
-**위치:** `src/main/java/org/blog/minecraftJobPlugin/commands/JobCommand.java`
-
-**추가된 명령어:**
-- `/job` - GUI 열기
-- `/job list` - 직업 목록 보기
-- `/job info <직업>` - 직업 상세 정보
-- `/job my` - 내 직업 확인
-- `/job reload` - 플러그인 리로드 (관리자)
-- `/job debug` - 디버그 정보 출력 (관리자)
-
----
-
-## 🔧 적용 방법
-
-### **Step 1: 파일 교체**
-
-```bash
-# 1. config.yml 교체
-cp config.yml src/main/resources/config.yml
-
-# 2. Java 파일 교체
-cp JobManager.java src/main/java/org/blog/minecraftJobPlugin/manager/
-cp JobPlugin.java src/main/java/org/blog/minecraftJobPlugin/
-cp JobGuiListener.java src/main/java/org/blog/minecraftJobPlugin/listeners/
-cp JobCommand.java src/main/java/org/blog/minecraftJobPlugin/commands/
-
-# 3. 새 파일 추가
-cp PlayerDataListener.java src/main/java/org/blog/minecraftJobPlugin/listeners/
-```
-
-### **Step 2: plugin.yml 수정**
-
-`src/main/resources/plugin.yml` 파일에서:
+### jobs.yml - 직업 정의
 
 ```yaml
-# 변경 전
-depend: [Vault]
-
-# 변경 후
-softdepend: [Vault]
+jobs:
+  explorer:
+    display: "탐험가"
+    description: "지도 제작 및 구조물 탐색에 특화된 직업"
+    skills:
+      - geoScan
+      - warpPoint
+    rarity: common
+    startingItems:
+      - material: COMPASS
+        amount: 1
+        name: "§6탐험가의 나침반"
 ```
 
-### **Step 3: 재빌드**
+### skills.yml - 스킬 정의
 
-```bash
-mvn clean package
-```
-
-### **Step 4: 서버 적용**
-
-```bash
-# 기존 플러그인 삭제
-rm server/plugins/job-1.0.0.jar
-
-# 새 플러그인 복사
-cp target/job-1.0.0.jar server/plugins/
-
-# 서버 재시작
-```
-
----
-
-## 🎮 테스트 시나리오
-
-### **1. 첫 직업 획득 (무료)**
-
-```
-1. 플레이어 접속
-2. /job 입력
-3. "광부" 좌클릭
-4. 메시지: "직업을 획득했습니다: 광부"
-5. 자동으로 장착됨
-6. /job my 로 확인
-```
-
-**결과:**
-- ✅ 잔액 변화 없음 (무료)
-- ✅ 광부 직업 획득
-- ✅ 광부 자동 장착
-
----
-
-### **2. 두 번째 직업 획득 (50,000원)**
-
-```
-1. /money 로 잔액 확인 (예: 100,000원)
-2. /job 입력
-3. "대장장이" 좌클릭
-4. 메시지: "직업을 획득했습니다: 대장장이 (비용: 50,000원)"
-5. /money 로 잔액 재확인 (예: 50,000원)
-```
-
-**결과:**
-- ✅ 50,000원 차감
-- ✅ 대장장이 직업 획득
-- ✅ 광부는 여전히 장착 상태
-
----
-
-### **3. 직업 중복 획득 시도**
-
-```
-1. /job 입력
-2. "광부" 다시 좌클릭
-3. 메시지: "이미 보유한 직업입니다!"
-4. 인벤토리 닫힘
-```
-
-**결과:**
-- ✅ 중복 획득 방지
-- ✅ 돈 차감 없음
-
----
-
-### **4. 잔액 부족 시**
-
-```
-1. 잔액: 10,000원 (세 번째 직업 비용: 100,000원)
-2. /job 입력
-3. "어부" 좌클릭
-4. 메시지: "직업을 획득하기 위한 돈이 부족합니다! (필요: 100,000원)"
-```
-
-**결과:**
-- ✅ 직업 획득 실패
-- ✅ 명확한 부족 금액 안내
-
----
-
-### **5. 직업 장착 변경**
-
-```
-1. /job 입력
-2. "대장장이" 우클릭
-3. 메시지: "장착 직업 변경: 대장장이"
-4. GUI 새로고침 (대장장이에 [장착중] 표시)
-```
-
-**결과:**
-- ✅ 비용 없이 장착 변경
-- ✅ 즉시 반영
-
----
-
-### **6. 데이터 저장/로드 테스트**
-
-```
-1. 플레이어가 직업 2개 획득 (광부, 대장장이)
-2. 대장장이 장착
-3. 서버 종료
-4. 서버 재시작
-5. 플레이어 재접속
-6. /job my 입력
-```
-
-**결과:**
-- ✅ 광부, 대장장이 보유 상태 유지
-- ✅ 대장장이 장착 상태 유지
-- ✅ 데이터 손실 없음
-
----
-
-## ⚙️ 비용 커스터마이징
-
-### **전체 비용 변경**
-
-`config.yml`:
 ```yaml
-job:
-  first_job_cost: 0           # 첫 직업
-  second_job_cost: 100000     # 두 번째 (10만원)
-  third_job_cost: 500000      # 세 번째 (50만원)
-  additional_job_cost: 1000000  # 네 번째 이후 (100만원)
+skills:
+  geoScan:
+    display: "지형 스캔"
+    cooldown: 300
+    levels:
+      1:
+        effect: "근처 지형 하이라이트"
+      2:
+        effect: "반경 증가"
 ```
 
-### **특정 직업만 비싸게**
+## 👔 직업 시스템
 
-`config.yml`:
-```yaml
-job:
-  # 기본 비용은 위와 동일
-  
-  # 특정 직업 개별 설정 (기본 비용 무시)
-  job_specific_costs:
-    대장장이: 200000   # 대장장이는 항상 20만원
-    연금술사: 300000   # 연금술사는 항상 30만원
-    요리사: 150000     # 요리사는 항상 15만원
-```
+### 사용 가능한 직업
 
----
+| 직업 | 희귀도 | 특징 | 주요 스킬 |
+|------|--------|------|-----------|
+| 탐험가 | Common | 지도 제작, 구조물 탐색 | 지형 스캔, 워프 지점 |
+| 목수 | Common | 나무 채집, 목재 가공 | 빠른 벌목, 효율적 조각 |
+| 광부 | Common | 광물 채굴, 광맥 탐사 | 광맥 감지, 폭파 채굴 |
+| 사냥꾼 | Common | 몹 사냥, 추적 | 치명타 사격, 추적 |
+| 농부 | Common | 작물 재배, 수확 | 풍작, 영양 강화 |
+| 어부 | Uncommon | 낚시, 희귀 아이템 획득 | 희귀 입질, 심해 |
+| 대장장이 | Uncommon | 무기/방어구 제작, 강화 | 정밀 단조, 열처리 |
+| 연금술사 | Rare | 포션 제작, 추출물 제작 | 이중 증류, 엘릭서 제작 |
+| 요리사 | Uncommon | 음식 조리, 버프 생성 | 명장 요리, 양념 마스터 |
 
-## 📊 데이터 저장 위치
+### 직업 조합 (콤보)
+
+특정 직업 조합 시 특별한 보너스를 획득합니다:
+
+- **광부 + 대장장이**: 특수 무기 제작 레시피 해금
+- **농부 + 요리사**: 고급 요리 레시피 해금
+- **탐험가 + 어부**: 해상 워프 포인트 추가
+
+## 🔮 스킬 시스템
+
+### 스킬 종류
+
+#### 탐험가 스킬
+- **지형 스캔 (geoScan)**: 주변 광물 하이라이트
+- **워프 지점 (warpPoint)**: 순간이동 지점 설치
+
+#### 목수 스킬
+- **빠른 벌목 (fastLumber)**: 채굴 속도 버프
+- **효율적 조각 (efficientCarve)**: 목재 드롭 증가
+
+#### 광부 스킬
+- **광맥 감지 (veinDetect)**: 주변 광맥 위치 파악
+- **폭파 채굴 (blastMining)**: 주변 블록 한번에 파괴
+
+#### 사냥꾼 스킬
+- **치명타 사격 (criticalShot)**: 화살 데미지 증가
+- **추적 (tracking)**: 주변 몹 감지
+
+#### 농부 스킬
+- **풍작 (bumperCrop)**: 수확량 증가
+- **영양 강화 (nutrientBoost)**: 작물 성장 촉진
+
+#### 어부 스킬
+- **희귀 입질 (rareCatch)**: 희귀 물고기 확률 증가
+- **심해 (deepSea)**: 수중 호흡 + 야간 투시
+
+#### 대장장이 스킬
+- **정밀 단조 (precisionForge)**: 제작 품질 증가
+- **열처리 (tempering)**: 장비 내구도 회복
+
+#### 연금술사 스킬
+- **이중 증류 (doubleBrew)**: 포션 효과 증가
+- **엘릭서 제작 (elixirCraft)**: 특수 효과 생성
+
+#### 요리사 스킬
+- **명장 요리 (gourmetCook)**: 음식 버프 강화
+- **양념 마스터 (spiceMaster)**: 포만감 회복
+
+### 스킬 레벨업
+
+- 스킬 사용 시 경험치 획득
+- 레벨업 시 효과 증가 및 쿨타임 감소
+- 최대 레벨: 10
+- 등급 보너스로 경험치 획득량 증가
+
+## 📜 퀘스트 시스템
+
+### 퀘스트 타입
+
+1. **collect_block**: 특정 블록 채집
+   - 예: 철광석 30개 채굴
+   
+2. **kill_mob**: 몹 처치
+   - 예: 몹 20마리 처치
+
+3. **harvest**: 작물 수확
+   - 예: 밀 200개 수확
+
+4. **catch_rare**: 희귀 물고기 낚시
+   - 예: 희귀 물고기 5마리
+
+### 퀘스트 보상
+
+- 금전 보상
+- 특성 포인트 1개
+- 등급 상승 진행도 증가
+
+## 🏆 등급 시스템
+
+### 등급 구조
+
+| 등급 | 이름 | 승급 조건 | 보상 |
+|------|------|-----------|------|
+| D | 초보자 | 직업 획득 | 기본 스킬 |
+| C | 수습 | 활동 200회 | 스킬 경험치 +10% |
+| B | 숙련 | 활동 500회 또는 퀘스트 10회 | 특성 포인트 +2, 상점 할인 5% |
+| A | 전문가 | 활동 1000회 + 퀘스트 20회 | 특성 포인트 +3, 상점 할인 10% |
+| S | 마스터 | 활동 2000회 + 퀘스트 50회 + 모든 스킬 Lv5 | 특성 포인트 +5, 상점 할인 20%, 칭호 |
+
+### 등급 혜택
+
+- **상점 할인**: 등급이 높을수록 할인율 증가
+- **스킬 경험치 보너스**: 등급별 10%~50% 보너스
+- **특성 포인트**: 승급 시 포인트 지급
+- **전용 칭호**: S등급 달성 시 칭호 획득
+
+## 💰 경제 시스템
+
+### Vault 연동
+
+플러그인은 Vault를 선택적으로 지원합니다:
+
+- **Vault 있음**: 외부 경제 플러그인 (EssentialsX 등) 사용
+- **Vault 없음**: 내부 경제 시스템 자동 사용
+
+### 상점 시스템
+
+- **직업별 전용 상점**: 각 직업마다 고유 상점
+- **구매/판매**: 아이템 구매 및 판매 모두 지원
+- **등급 할인**: 높은 등급일수록 할인 적용
+- **대량 판매**: 여러 아이템 동시 판매 가능
+
+### 수입원
+
+1. **퀘스트 완료**: 100~300원
+2. **아이템 판매**: 상점에서 아이템 판매
+3. **등급 승급 보상**: 등급 상승 시 보너스
+4. **스킬 활용**: 특정 스킬로 추가 수입
+
+## 🛠 개발자 정보
+
+### 기술 스택
+
+- **언어**: Java 17+
+- **빌드 도구**: Gradle (추정)
+- **API**: Spigot/Paper 1.21.10
+- **의존성**: Vault (선택사항)
+
+### 아키텍처 특징
+
+1. **모듈화된 구조**: 기능별 패키지 분리
+2. **이벤트 기반**: Bukkit 이벤트 시스템 활용
+3. **비동기 처리**: 데이터 저장 시 서버 성능 최적화
+4. **캐싱**: 메모리 캐시로 디스크 I/O 최소화
+5. **YAML 기반**: 설정 및 데이터 저장
+
+### 데이터 구조
 
 ```
 plugins/MinecraftJobPlugin/
-├── config.yml
-├── config/
+├── config.yml                    # 메인 설정
+├── config/                       # 세부 설정
 │   ├── jobs.yml
-│   ├── quests.yml
 │   ├── skills.yml
-│   └── ...
+│   ├── quests.yml
+│   ├── shops.yml
+│   ├── grades.yml
+│   ├── combos.yml
+│   └── traits.yml
 └── data/
-    └── player/
-        ├── UUID1.yml  ← 플레이어별 데이터
-        ├── UUID2.yml
-        └── UUID3.yml
+    └── player/                   # 플레이어별 데이터
+        └── <UUID>.yml
 ```
 
-**플레이어 데이터 예시 (UUID.yml):**
-```yaml
-jobs:
-  - 광부
-  - 대장장이
-active_job: 대장장이
-```
+### 확장 가능성
+
+플러그인은 다음과 같은 확장이 가능합니다:
+
+1. **새로운 직업 추가**: `jobs.yml`에 직업 정의
+2. **커스텀 스킬**: `skills.yml` + `SkillManager` 확장
+3. **퀘스트 추가**: `quests.yml`에 퀘스트 정의
+4. **상점 아이템**: `shops.yml`에 아이템 추가
+5. **조합 추가**: `combos.yml`에 조합 정의
+
+### 성능 최적화
+
+- ✅ 비동기 데이터 저장
+- ✅ 메모리 캐싱 (ConcurrentHashMap 사용)
+- ✅ 자동 저장 주기 설정 가능
+- ✅ 이벤트 리스너 최적화
+- ✅ 리플렉션 최소화 (Vault 연동 시만 사용)
+
+## 📝 라이선스
+
+이 프로젝트의 라이선스는 명시되어 있지 않습니다. 사용 전 저작권자에게 문의하세요.
+
+## 👨‍💻 제작자
+
+**junggyeol4444**
+
+## 🤝 기여
+
+기여 방법에 대한 정보가 필요하신 경우 저장소 관리자에게 문의하세요.
+
+## 📞 지원
+
+버그 리포트 또는 기능 제안은 이슈 트래커를 통해 제출해주세요.
 
 ---
 
-## 🐛 트러블슈팅
-
-### **문제 1: "이미 보유한 직업입니다!" 안 뜨고 계속 획득됨**
-
-**원인:** JobManager의 `hasJob()` 메서드가 제대로 작동하지 않음
-
-**해결:**
-1. JobManager.java가 완전히 교체되었는지 확인
-2. `playerJobs` 필드가 제대로 선언되었는지 확인
-3. 서버 재시작 후 재테스트
-
----
-
-### **문제 2: 비용이 차감되지 않음**
-
-**원인:** EconomyManager 연동 문제
-
-**해결:**
-1. config.yml에서 `vault.use_vault_economy: true` 확인
-2. Vault + EssentialsX 설치 확인
-3. 서버 로그에서 "Vault Economy 연동 완료" 메시지 확인
-
----
-
-### **문제 3: 서버 재시작 후 직업 데이터 사라짐**
-
-**원인:** PlayerDataListener 미등록 또는 저장 실패
-
-**해결:**
-1. PlayerDataListener.java 파일이 추가되었는지 확인
-2. JobPlugin.java의 `registerListeners()`에 등록되었는지 확인
-3. `plugins/MinecraftJobPlugin/data/player/` 폴더에 UUID.yml 파일 생성 확인
-
----
-
-## 📞 추가 도움
-
-더 궁금한 점이나 오류가 발생하면 알려주세요!
-
-- `/job debug` - 디버그 정보 출력 (관리자)
-- 콘솔 로그 확인
-- UUID.yml 파일 내용 확인
+**Note**: 이 README는 제공된 소스 코드를 기반으로 작성되었습니다. 실제 사용 시 세부 사항이 다를 수 있습니다.
