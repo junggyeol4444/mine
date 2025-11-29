@@ -1,0 +1,178 @@
+jobs:
+  explorer:
+    display: "탐험가"
+    description: "지도 제작 및 구조물 탐색에 특화된 직업"
+    skills:
+      - geoScan
+      - warpPoint
+    actions:
+      - record_location
+      - make_map
+      - explorer_bonus
+    rarity: common
+    startingItems:
+      - material: COMPASS
+        amount: 1
+        name: "§6탐험가의 나침반"
+      - material: BOOK
+        amount: 1
+        name: "§e탐험 일지"
+      - material: TORCH
+        amount: 16
+
+  carpenter:
+    display: "목수"
+    description: "나무 채집과 가공, 목재 아이템 제작 특화"
+    skills:
+      - fastLumber
+      - efficientCarve
+    actions:
+      - cut_tree
+      - make_wood_items
+    rarity: common
+    startingItems:
+      - material: IRON_AXE
+        amount: 1
+        name: "§6목수의 도끼"
+        enchants:
+          EFFICIENCY: 1
+
+  miner:
+    display: "광부"
+    description: "광물 채굴 및 광산 탐사 전문가"
+    skills:
+      - veinDetect
+      - blastMining
+    actions:
+      - mine_ore
+      - smelt_bonus
+    rarity: common
+    startingItems:
+      - material: IRON_PICKAXE
+        amount: 1
+        name: "§6광부의 곡괭이"
+        enchants:
+          EFFICIENCY: 1
+
+  hunter:
+    display: "사냥꾼"
+    description: "동물과 몹 사냥, 트래킹에 강함"
+    skills:
+      - criticalShot
+      - tracking
+    actions:
+      - hunt
+      - trap_place
+    rarity: common
+    startingItems:
+      - material: BOW
+        amount: 1
+        name: "§6사냥꾼의 활"
+        enchants:
+          POWER: 1
+      - material: ARROW
+        amount: 32
+      - material: IRON_SWORD
+        amount: 1
+        name: "§6사냥용 검"
+        enchants:
+          SHARPNESS: 1
+
+  farmer:
+    display: "농부"
+    description: "작물 재배와 수확에 특화"
+    skills:
+      - bumperCrop
+      - nutrientBoost
+    actions:
+      - plant
+      - harvest
+    rarity: common
+    startingItems:
+      - material: IRON_HOE
+        amount: 1
+        name: "§6농부의 괭이"
+        enchants:
+          EFFICIENCY: 1
+      - material: WHEAT_SEEDS
+        amount: 16
+      - material: CARROT
+        amount: 8
+      - material: POTATO
+        amount: 8
+
+  fisher:
+    display: "어부"
+    description: "낚시로 희귀 아이템을 획득 가능"
+    skills:
+      - rareCatch
+      - deepSea
+    actions:
+      - fish
+      - net_cast
+    rarity: uncommon
+    startingItems:
+      - material: FISHING_ROD
+        amount: 1
+        name: "§b어부의 낚싯대"
+        enchants:
+          LURE: 1
+          LUCK_OF_THE_SEA: 1
+
+  blacksmith:
+    display: "대장장이"
+    description: "무기 및 방어구 제작과 강화 전문가"
+    skills:
+      - precisionForge
+      - tempering
+    actions:
+      - forge
+      - repair
+    rarity: uncommon
+    startingItems:
+      - material: ANVIL
+        amount: 1
+      - material: IRON_INGOT
+        amount: 8
+      - material: IRON_BLOCK
+        amount: 2
+
+  alchemist:
+    display: "연금술사"
+    description: "포션 및 각종 추출물 제작 전문"
+    skills:
+      - doubleBrew
+      - elixirCraft
+    actions:
+      - brew
+      - distill
+    rarity: rare
+    startingItems:
+      - material: GLASS_BOTTLE
+        amount: 8
+      - material: NETHER_WART
+        amount: 4
+      - material: BREWING_STAND
+        amount: 1
+      - material: BLAZE_POWDER
+        amount: 4
+
+  chef:
+    display: "요리사"
+    description: "음식 조리로 버프와 특수 효과를 생성"
+    skills:
+      - gourmetCook
+      - spiceMaster
+    actions:
+      - cook
+      - prepare_meal
+    rarity: uncommon
+    startingItems:
+      - material: COAL
+        amount: 8
+      - material: BEEF
+        amount: 8
+      - material: FURNACE
+        amount: 1
+      - material: BUCKET
+        amount: 1

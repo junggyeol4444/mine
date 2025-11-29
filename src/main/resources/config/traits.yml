@@ -1,0 +1,56 @@
+
+  # 특성(트리) 정의 — job 별로 선택 가능한 특성 목록
+  traits:
+    explorer:
+      - name: "지도 제작가"
+        effect: "지도 제작시 보상 증가"
+      - name: "정찰자"
+        effect: "이동 속도 소폭 증가"
+
+    carpenter:
+      - name: "정밀 절단"
+        effect: "목재 획득량 증가"
+      - name: "목공 숙련"
+        effect: "목재 제작 속도 증가"
+
+    miner:
+      - name: "광맥 전문가"
+        effect: "광물 채굴시 추가 드롭 확률 증가"
+      - name: "내구력"
+        effect: "곡괭이 내구도 소모 감소"
+
+    hunter:
+      - name: "정확한 조준"
+        effect: "원거리 치명타 확률 상승"
+      - name: "덫 제작자"
+        effect: "덫의 효율 증가"
+
+    farmer:
+      - name: "비료 전문가"
+        effect: "비료 효율 증가"
+      - name: "자동 수확"
+        effect: "수확 시간 단축"
+
+    fisher:
+      - name: "바다의 친구"
+        effect: "낚시 반응속도 증가"
+      - name: "그물 장인"
+        effect: "잡은 아이템 중 희귀 확률 증가"
+
+    blacksmith:
+      - name: "열처리 전문가"
+        effect: "제작 성공률 증가"
+      - name: "강화 기술"
+        effect: "강화 시 실패율 감소"
+
+    alchemist:
+      - name: "정제자"
+        effect: "재료 소모 감소"
+      - name: "증류 마스터"
+        effect: "포션 효과 강화"
+
+    chef:
+      - name: "미각"
+        effect: "요리로 주는 버프 강화"
+      - name: "저장 기술"
+        effect: "요리 재료 보존률 증가"
