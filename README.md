@@ -152,16 +152,8 @@ MinecraftJobPlugin/
    ```
 
 2. **플러그인 설치**
-   ```bash
-   # 서버의 plugins 폴더에 .jar 파일 복사
-   cp MinecraftJobPlugin-1.0.0.jar /서버경로/plugins/
-   ```
 
 3. **서버 시작**
-   ```bash
-   # 서버 시작 (설정 파일 자동 생성)
-   ./start.sh
-   ```
 
 4. **설정 파일 편집** (선택사항)
    ```bash
